@@ -13,6 +13,7 @@ project(PhysFX VERSION 0.2.0 LANGUAGES CXX)
 option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
 option(PHYSFX_WITH_FFMPEG "启用 FFmpeg 动态视频 IO（需要 LGPL 开发包）" OFF)
+option(PHYSFX_WITH_ONNX "启用 ONNX Runtime 推理后端" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,9 +44,32 @@ target_link_libraries(physfx_perception PUBLIC physfx_core)
 
 add_library(physfx_semantics STATIC
   semantics/src/stub/StubSemantics.cpp
+  semantics/src/onnx/OnnxSegmenter.cpp
+  semantics/src/onnx/OnnxTracker.cpp
 )
 target_include_directories(physfx_semantics PUBLIC semantics/include)
 target_link_libraries(physfx_semantics PUBLIC physfx_core)
+
+set(PHYSFX_ONNX_AVAILABLE OFF)
+if(PHYSFX_WITH_ONNX)
+  find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/onnxruntime/include" ENV ONNXRUNTIME_ROOT)
+  find_library(ONNXRUNTIME_LIBRARY NAMES onnxruntime
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/onnxruntime/lib" ENV ONNXRUNTIME_ROOT)
+  if(ONNXRUNTIME_INCLUDE_DIR AND ONNXRUNTIME_LIBRARY)
+    set(PHYSFX_ONNX_AVAILABLE ON)
+    message(STATUS "启用 ONNX Runtime 语义后端")
+  else()
+    message(WARNING "请求启用 ONNX Runtime，但未找到开发包；回退到语义桩")
+  endif()
+endif()
+if(PHYSFX_ONNX_AVAILABLE)
+  target_compile_definitions(physfx_semantics PRIVATE PHYSFX_ONNX_AVAILABLE=1)
+  target_include_directories(physfx_semantics PRIVATE "${ONNXRUNTIME_INCLUDE_DIR}")
+  target_link_libraries(physfx_semantics PRIVATE "${ONNXRUNTIME_LIBRARY}")
+else()
+  target_compile_definitions(physfx_semantics PRIVATE PHYSFX_ONNX_AVAILABLE=0)
+endif()
 
 add_library(physfx_editing STATIC
   editing/src/Commands.cpp
