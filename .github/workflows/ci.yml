@@ -45,11 +45,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 Linux FFmpeg 开发包
-        run: sudo apt-get update && sudo apt-get install -y libavformat-dev libavcodec-dev libavutil-dev libswscale-dev
-      - name: 验证 FFmpeg ON 与 ONNX 缺失回退
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            third_party/cache/downloads
+            third_party/ffmpeg
+            third_party/onnxruntime
+          key: physfx-deps-${{ runner.os }}-ffmpeg-8.1.2-onnx-1.18.1
+      - name: 准备锁定的 LGPL FFmpeg 与 ONNX Runtime
+        run: python tools/setup_deps.py --component all
+      - name: 验证 FFmpeg 与 ONNX Runtime ON
         run: cmake -S . -B build/on -DPHYSFX_WITH_FFMPEG=ON -DPHYSFX_WITH_ONNX=ON -DPHYSFX_BUILD_TESTS=ON
       - name: 编译可选配置
         run: cmake --build build/on --parallel 2
       - name: 运行无模型测试
-        run: ctest --test-dir build/on --output-on-failure -LE needs_models
+        run: LD_LIBRARY_PATH="$PWD/third_party/ffmpeg/lib:$PWD/third_party/onnxruntime/runtimes/linux-x64/native:$LD_LIBRARY_PATH" ctest --test-dir build/on --output-on-failure -LE needs_models
+      - name: 保存演示视频
+        uses: actions/upload-artifact@v4
+        with:
+          name: particle-occlusion-demo
+          path: build/particle-occlusion-demo.mp4
+          if-no-files-found: error

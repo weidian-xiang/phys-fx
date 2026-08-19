@@ -47,8 +47,8 @@ OnnxTracker::~OnnxTracker() = default;
 OnnxTracker::OnnxTracker(OnnxTracker&&) noexcept = default;
 OnnxTracker& OnnxTracker::operator=(OnnxTracker&&) noexcept = default;
 
-core::Result<std::vector<core::Entity>> OnnxTracker::track(
-    const core::Frame&, const std::vector<core::Entity>&) {
+core::Result<std::vector<core::Entity>> OnnxTracker::track(const core::Frame&,
+                                                           const std::vector<core::Entity>&) {
 #if PHYSFX_ONNX_AVAILABLE
   if (!impl_->session) {
     return core::Status{core::StatusCode::kNotFound, "ONNX 跟踪模型不存在或无法加载"};

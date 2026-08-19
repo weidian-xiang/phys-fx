@@ -23,8 +23,7 @@ class CompositingRenderPath final : public core::IRenderPath {
   /** @brief 创建物理合成路径。 @param compositor 合成器实现。 */
   explicit CompositingRenderPath(std::unique_ptr<ICompositor> compositor);
   [[nodiscard]] std::string_view name() const noexcept override;
-  core::Result<core::Frame> render(const core::Frame& frame,
-                                   const core::SceneContext& scene,
+  core::Result<core::Frame> render(const core::Frame& frame, const core::SceneContext& scene,
                                    const core::SimulationResult& simulation) override;
 
  private:

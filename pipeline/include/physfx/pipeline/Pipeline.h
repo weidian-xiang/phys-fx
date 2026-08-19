@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <memory>
+
 #include "physfx/core/Config.h"
 #include "physfx/core/IRenderPath.h"
 #include "physfx/editing/EditCommandStack.h"

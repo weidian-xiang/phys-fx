@@ -45,5 +45,7 @@ python -m pytest bindings/python/tests
 
 ## 当前限制
 
-Phase 3 的 ONNX 模型输入输出仍按具体模型卡片装载，真实权重不入库；FFmpeg ON 路径
-要求 LGPL 动态开发包。开源版不阉割已有能力，未来商业服务只提供增量模板、云算力和企业支持。
+Phase 3 已通过锁定的 LGPL shared FFmpeg 完成真实视频往返和粒子遮挡 demo。ONNX
+Runtime 可选构建已通过，但 SAM/XMem 类模型输入输出仍待具体模型卡片锁定，真实权重
+不入库；当前 demo 明确使用传统分割降级路径。开源版不阉割已有能力，未来商业服务
+只提供增量模板、云算力和企业支持。

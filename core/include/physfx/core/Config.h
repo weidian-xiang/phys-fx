@@ -37,6 +37,8 @@ struct Config {
   std::string semanticsBackend{"stub"};
   std::string segmenterModelPath{};
   std::string trackerModelPath{};
+  std::uint32_t promptX{0};
+  std::uint32_t promptY{0};
   std::string physicsBackend{"mock"};
   std::string compositorBackend{"passthrough"};
   std::string particlePreset{"sparks"};

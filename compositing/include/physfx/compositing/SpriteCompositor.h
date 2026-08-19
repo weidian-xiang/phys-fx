@@ -20,15 +20,12 @@ class SpriteCompositor final : public ICompositor {
   /** @brief 创建合成器。 @param gain 全局粒子亮度增益。 @param warmth 色温偏移。 */
   explicit SpriteCompositor(float gain = 1.0F, float warmth = 0.0F);
 
-  core::Frame compose(const core::Frame& frame,
-                      const core::SceneContext& scene,
+  core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                       const core::SimulationResult& simulation) override;
 
  private:
-  [[nodiscard]] bool occluded(const core::SceneContext& scene,
-                              std::uint64_t frameIndex,
-                              std::uint32_t x,
-                              std::uint32_t y) const;
+  [[nodiscard]] bool occluded(const core::SceneContext& scene, std::uint64_t frameIndex,
+                              std::uint32_t x, std::uint32_t y) const;
 
   float gain_{1.0F};
   float warmth_{0.0F};

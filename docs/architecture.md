@@ -66,7 +66,11 @@ sequenceDiagram
 
 ## 阶段与可禁用性
 
-`Config` 中的 `perceptionEnabled`、`semanticsEnabled`、`editingEnabled`、`physicsEnabled`、`renderEnabled` 对应五个阶段。`StageFactory::createPipeline` 装配桩实现，任一阶段可禁用；编辑阶段默认执行 `EmptyCommand`，语义阶段可关闭以复现纯物理管线。
+`Config` 中的 `perceptionEnabled`、`semanticsEnabled`、`editingEnabled`、`physicsEnabled`、`renderEnabled` 对应五个阶段。`StageFactory::createPipeline` 可装配桩、传统提示点分割、ONNX 适配器、CPU 粒子与精灵合成器，任一阶段可禁用；编辑阶段默认执行 `EmptyCommand`，语义阶段可关闭以复现纯物理管线。
+
+Phase 3 的火花与烟尘由 `BuiltInEffectTemplate` 注册到 `PluginRegistry`，管线只读取模板
+的通用参数契约后装配粒子后端，插件模块不反向依赖 physics。FFmpeg 与 ONNX Runtime
+均为可选动态依赖，关闭开关时沿用桩；开启时只从哈希锁定目录或显式依赖根发现实体。
 
 ## 商业边界
 
