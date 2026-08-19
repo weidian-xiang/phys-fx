@@ -1,6 +1,7 @@
-# 贡献指南（草案）
+# 贡献指南
 
-欢迎提交问题、设计建议和代码贡献。当前项目处于 Phase 2 架构整合期，提交前请注意：
+欢迎提交问题、设计建议和代码贡献。当前项目进入 Phase 3，完整的提交、分支、PR
+和发布规则见 [`docs/git-workflow.md`](docs/git-workflow.md)。
 
 1. 使用 C++20，类型采用 PascalCase，函数和变量采用 camelCase，命名空间使用 `physfx::`。
 2. 新增接口必须包含中文 Doxygen 注释，并注明 `@brief`、参数、返回值和对应后续阶段 TODO。
@@ -13,10 +14,11 @@
 每个提交必须包含 `Signed-off-by` 行，例如：
 
 ```text
-Signed-off-by: 向伟典 <你的 Gitee 绑定邮箱>
+Signed-off-by: 向伟典 <xwd752438081@163.com>
 ```
 
 签署表示你有权提交该内容，并同意按 Apache-2.0 许可授予项目。可以使用
 `git commit -s` 自动添加签署行。
 
-CI/CD 留待 Phase 3 启用；提交前至少运行本地一键工作流和版权检查。
+提交前请运行本地构建、CTest、pytest、版权扫描和提交信息校验；每个 PR 必须更新
+`CHANGELOG.md` 的 `Unreleased` 段。master 只接受 PR 合入，不直接推送。
