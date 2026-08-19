@@ -54,6 +54,7 @@ struct FFmpegVideoReader::Impl {
   std::uint64_t index{0};
   double frameRate{0.0};
   std::uint64_t totalFrames{0};
+  bool flushing{false};
 
   ~Impl() { reset(); }
 
@@ -73,6 +74,7 @@ struct FFmpegVideoReader::Impl {
     index = 0;
     frameRate = 0.0;
     totalFrames = 0;
+    flushing = false;
   }
 };
 
@@ -83,7 +85,7 @@ FFmpegVideoReader& FFmpegVideoReader::operator=(FFmpegVideoReader&&) noexcept = 
 
 PlatformStatus FFmpegVideoReader::open(const std::filesystem::path& path) {
   impl_->reset();
-  const std::string utf8Path = path.u8string();
+  const std::string utf8Path = path.string();
   int result = avformat_open_input(&impl_->format, utf8Path.c_str(), nullptr, nullptr);
   if (result < 0) {
     return ffmpegError("打开视频", result);
@@ -146,47 +148,66 @@ PlatformStatus FFmpegVideoReader::read(core::Frame& frame) {
     return {core::StatusCode::kInvalidArgument, "视频读取器尚未打开"};
   }
   while (true) {
-    const int readResult = av_read_frame(impl_->format, impl_->packet);
-    if (readResult < 0) {
-      return readResult == AVERROR_EOF ? PlatformStatus{core::StatusCode::kNotFound, "视频读取结束"}
-                                      : ffmpegError("读取视频包", readResult);
+    int result = avcodec_receive_frame(impl_->codec, impl_->decoded);
+    if (result == 0) {
+      sws_scale(impl_->scaler, impl_->decoded->data, impl_->decoded->linesize, 0,
+                impl_->codec->height, impl_->rgb->data, impl_->rgb->linesize);
+      const std::size_t rowBytes = static_cast<std::size_t>(impl_->codec->width) * 3U;
+      frame.index = impl_->index++;
+      frame.width = static_cast<std::uint32_t>(impl_->codec->width);
+      frame.height = static_cast<std::uint32_t>(impl_->codec->height);
+      frame.format = core::PixelFormat::kRgb8;
+      frame.frameRate = impl_->frameRate;
+      frame.totalFrames = impl_->totalFrames;
+      frame.presentationTimestamp =
+          impl_->decoded->pts == AV_NOPTS_VALUE ? 0 : impl_->decoded->pts;
+      const AVStream* stream = impl_->format->streams[impl_->streamIndex];
+      frame.timestampSeconds =
+          impl_->decoded->pts == AV_NOPTS_VALUE
+              ? (impl_->frameRate > 0.0 ? static_cast<double>(frame.index) / impl_->frameRate : 0.0)
+              : impl_->decoded->pts * av_q2d(stream->time_base);
+      frame.pixels.resize(rowBytes * static_cast<std::size_t>(impl_->codec->height));
+      for (int row = 0; row < impl_->codec->height; ++row) {
+        std::copy_n(impl_->rgb->data[0] + row * impl_->rgb->linesize[0], rowBytes,
+                    frame.pixels.data() + static_cast<std::size_t>(row) * rowBytes);
+      }
+      return core::Status::success();
     }
-    if (impl_->packet->stream_index != impl_->streamIndex) {
-      av_packet_unref(impl_->packet);
-      continue;
+    if (result == AVERROR_EOF) {
+      return {core::StatusCode::kNotFound, "视频读取结束"};
     }
-    int result = avcodec_send_packet(impl_->codec, impl_->packet);
-    av_packet_unref(impl_->packet);
-    if (result < 0) {
-      return ffmpegError("发送视频包到解码器", result);
-    }
-    result = avcodec_receive_frame(impl_->codec, impl_->decoded);
-    if (result == AVERROR(EAGAIN)) {
-      continue;
-    }
-    if (result < 0) {
+    if (result != AVERROR(EAGAIN)) {
       return ffmpegError("接收解码帧", result);
     }
-    sws_scale(impl_->scaler, impl_->decoded->data, impl_->decoded->linesize, 0,
-              impl_->codec->height, impl_->rgb->data, impl_->rgb->linesize);
-    const std::size_t rowBytes = static_cast<std::size_t>(impl_->codec->width) * 3U;
-    frame.index = impl_->index++;
-    frame.width = static_cast<std::uint32_t>(impl_->codec->width);
-    frame.height = static_cast<std::uint32_t>(impl_->codec->height);
-    frame.format = core::PixelFormat::kRgb8;
-    frame.frameRate = impl_->frameRate;
-    frame.totalFrames = impl_->totalFrames;
-    frame.presentationTimestamp = impl_->decoded->pts == AV_NOPTS_VALUE ? 0 : impl_->decoded->pts;
-    const AVStream* stream = impl_->format->streams[impl_->streamIndex];
-    frame.timestampSeconds = impl_->decoded->pts == AV_NOPTS_VALUE
-                                 ? static_cast<double>(frame.index) / impl_->frameRate
-                                 : impl_->decoded->pts * av_q2d(stream->time_base);
-    frame.pixels.resize(rowBytes * static_cast<std::size_t>(impl_->codec->height));
-    for (int row = 0; row < impl_->codec->height; ++row) {
-      std::copy_n(impl_->rgb->data[0] + row * impl_->rgb->linesize[0], rowBytes,
-                  frame.pixels.data() + static_cast<std::size_t>(row) * rowBytes);
+    if (impl_->flushing) {
+      return {core::StatusCode::kNotFound, "视频读取结束"};
     }
-    return core::Status::success();
+
+    do {
+      result = av_read_frame(impl_->format, impl_->packet);
+      if (result == AVERROR_EOF) {
+        impl_->flushing = true;
+        result = avcodec_send_packet(impl_->codec, nullptr);
+        if (result < 0 && result != AVERROR_EOF) {
+          return ffmpegError("刷新视频解码器", result);
+        }
+        break;
+      }
+      if (result < 0) {
+        return ffmpegError("读取视频包", result);
+      }
+      if (impl_->packet->stream_index != impl_->streamIndex) {
+        av_packet_unref(impl_->packet);
+      }
+    } while (impl_->packet->stream_index != impl_->streamIndex);
+    if (impl_->flushing) {
+      continue;
+    }
+    result = avcodec_send_packet(impl_->codec, impl_->packet);
+    av_packet_unref(impl_->packet);
+    if (result < 0 && result != AVERROR(EAGAIN)) {
+      return ffmpegError("发送视频包到解码器", result);
+    }
   }
 }
 

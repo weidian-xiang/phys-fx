@@ -50,6 +50,15 @@ struct FFmpegVideoWriter::Impl {
   ~Impl() { reset(); }
 
   void reset() noexcept {
+    if (codec != nullptr && format != nullptr && stream != nullptr && packet != nullptr &&
+        headerWritten && avcodec_send_frame(codec, nullptr) >= 0) {
+      while (avcodec_receive_packet(codec, packet) >= 0) {
+        av_packet_rescale_ts(packet, codec->time_base, stream->time_base);
+        packet->stream_index = stream->index;
+        av_interleaved_write_frame(format, packet);
+        av_packet_unref(packet);
+      }
+    }
     if (format != nullptr && headerWritten) {
       av_write_trailer(format);
     }
