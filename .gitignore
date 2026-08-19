@@ -1,0 +1,26 @@
+# 构建产物
+build/
+out/
+cmake-build-*/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+
+# 第三方实体验证包（仅允许 vcpkg manifest 入库）
+third_party/cache/
+third_party/packages/
+*.egg-info/

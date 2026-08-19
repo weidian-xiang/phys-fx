@@ -1,0 +1,14 @@
+# PhysFX 版权与品牌说明
+
+版权所有：2026 向伟典。
+
+仓库中的源代码、文档和示例默认使用统一版权头，模板由 `tools/check_copyright.py` 管理：
+
+```text
+PhysFX Engine —— 视频世界编辑器（Video World Editor）
+Copyright (c) 2026 向伟典
+SPDX-License-Identifier: Apache-2.0
+```
+
+代码版权按 Apache License 2.0 授权，修改文件的衍生版本必须保留显著修改声明。
+“PhysFX”名称、Logo、品牌视觉和相关商标不在 Apache-2.0 授权范围内，未经书面许可不得用于冒充官方发行版。

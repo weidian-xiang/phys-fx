@@ -1,0 +1,192 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+#
+# 本文件遵循 Apache License 2.0 开源协议，许可证全文见仓库根目录 LICENSE 文件。
+# 按 Apache-2.0 要求，修改本文件的衍生版本须在文件中保留显著修改声明。
+#
+# SPDX-License-Identifier: Apache-2.0
+
+cmake_minimum_required(VERSION 3.26)
+
+project(PhysFX VERSION 0.2.0 LANGUAGES CXX)
+
+option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
+option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+  add_compile_options(/W4 /permissive-)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+include(CTest)
+
+add_library(physfx_core STATIC
+  core/src/Config.cpp
+  core/src/Log.cpp
+  core/src/SceneGraph.cpp
+  core/src/SemanticScene.cpp
+)
+target_include_directories(physfx_core PUBLIC core/include)
+target_compile_features(physfx_core PUBLIC cxx_std_20)
+
+add_library(physfx_perception STATIC
+  perception/src/stub/StubEstimators.cpp
+)
+target_include_directories(physfx_perception PUBLIC perception/include)
+target_link_libraries(physfx_perception PUBLIC physfx_core)
+
+add_library(physfx_semantics STATIC
+  semantics/src/stub/StubSemantics.cpp
+)
+target_include_directories(physfx_semantics PUBLIC semantics/include)
+target_link_libraries(physfx_semantics PUBLIC physfx_core)
+
+add_library(physfx_editing STATIC
+  editing/src/Commands.cpp
+  editing/src/EditCommandStack.cpp
+)
+target_include_directories(physfx_editing PUBLIC editing/include)
+target_link_libraries(physfx_editing PUBLIC physfx_core)
+
+add_library(physfx_physics STATIC
+  physics/src/mock/MockSimulator.cpp
+)
+target_include_directories(physfx_physics PUBLIC physics/include)
+target_link_libraries(physfx_physics PUBLIC physfx_core)
+
+add_library(physfx_compositing STATIC
+  compositing/src/PassthroughCompositor.cpp
+)
+target_include_directories(physfx_compositing PUBLIC compositing/include)
+target_link_libraries(physfx_compositing PUBLIC physfx_core)
+
+add_library(physfx_neural_render STATIC
+  neural_render/src/passthrough/PassthroughNeuralRenderer.cpp
+)
+target_include_directories(physfx_neural_render PUBLIC neural_render/include)
+target_link_libraries(physfx_neural_render PUBLIC physfx_core)
+
+add_library(physfx_plugins STATIC
+  plugins/src/PluginRegistry.cpp
+  plugins/examples/empty_effect/EmptyEffectPlugin.cpp
+)
+target_include_directories(physfx_plugins PUBLIC plugins/include)
+target_link_libraries(physfx_plugins PUBLIC physfx_core)
+
+add_library(physfx_platform STATIC
+  platform/src/StubVideoReader.cpp
+  platform/src/StubVideoWriter.cpp
+  platform/src/StubGpuContext.cpp
+)
+target_include_directories(physfx_platform PUBLIC platform/include)
+target_link_libraries(physfx_platform PUBLIC physfx_core)
+
+add_library(physfx_cloud INTERFACE)
+target_include_directories(physfx_cloud INTERFACE cloud/include)
+target_link_libraries(physfx_cloud INTERFACE physfx_core)
+
+add_library(physfx_pipeline STATIC
+  pipeline/src/Pipeline.cpp
+  pipeline/src/StageFactory.cpp
+)
+target_include_directories(physfx_pipeline PUBLIC pipeline/include)
+target_link_libraries(physfx_pipeline PUBLIC
+  physfx_core
+  physfx_perception
+  physfx_semantics
+  physfx_editing
+  physfx_physics
+  physfx_compositing
+  physfx_neural_render
+  physfx_plugins
+)
+
+add_subdirectory(apps/cli)
+
+if(PHYSFX_BUILD_TESTS)
+  enable_testing()
+  find_package(GTest CONFIG QUIET)
+  add_executable(physfx_core_tests core/tests/core_dummy_test.cpp)
+  target_link_libraries(physfx_core_tests PRIVATE physfx_core)
+  add_test(NAME core_dummy_test COMMAND physfx_core_tests)
+
+  add_executable(physfx_perception_tests perception/tests/perception_dummy_test.cpp)
+  target_link_libraries(physfx_perception_tests PRIVATE physfx_perception)
+  add_test(NAME perception_dummy_test COMMAND physfx_perception_tests)
+
+  add_executable(physfx_physics_tests physics/tests/physics_dummy_test.cpp)
+  target_link_libraries(physfx_physics_tests PRIVATE physfx_physics)
+  add_test(NAME physics_dummy_test COMMAND physfx_physics_tests)
+
+  add_executable(physfx_semantics_tests semantics/tests/semantics_dummy_test.cpp)
+  target_link_libraries(physfx_semantics_tests PRIVATE physfx_semantics)
+  add_test(NAME semantics_dummy_test COMMAND physfx_semantics_tests)
+
+  add_executable(physfx_editing_tests editing/tests/editing_dummy_test.cpp)
+  target_link_libraries(physfx_editing_tests PRIVATE physfx_editing)
+  add_test(NAME editing_dummy_test COMMAND physfx_editing_tests)
+
+  add_executable(physfx_compositing_tests compositing/tests/compositing_dummy_test.cpp)
+  target_link_libraries(physfx_compositing_tests PRIVATE physfx_compositing)
+  add_test(NAME compositing_dummy_test COMMAND physfx_compositing_tests)
+
+  add_executable(physfx_neural_render_tests neural_render/tests/neural_render_dummy_test.cpp)
+  target_link_libraries(physfx_neural_render_tests PRIVATE physfx_neural_render)
+  add_test(NAME neural_render_dummy_test COMMAND physfx_neural_render_tests)
+
+  add_executable(physfx_pipeline_tests pipeline/tests/pipeline_dummy_test.cpp)
+  target_link_libraries(physfx_pipeline_tests PRIVATE physfx_pipeline)
+  add_test(NAME pipeline_dummy_test COMMAND physfx_pipeline_tests)
+
+  add_executable(physfx_plugins_tests plugins/tests/plugins_dummy_test.cpp)
+  target_link_libraries(physfx_plugins_tests PRIVATE physfx_plugins)
+  add_test(NAME plugins_dummy_test COMMAND physfx_plugins_tests)
+
+  add_executable(physfx_platform_tests platform/tests/platform_dummy_test.cpp)
+  target_link_libraries(physfx_platform_tests PRIVATE physfx_platform)
+  add_test(NAME platform_dummy_test COMMAND physfx_platform_tests)
+
+  add_executable(physfx_architecture_tests tests/architecture_dependency_test.cpp)
+  target_link_libraries(physfx_architecture_tests PRIVATE physfx_core)
+  target_compile_definitions(physfx_architecture_tests PRIVATE
+    PHYSFX_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME architecture_dependency_test COMMAND physfx_architecture_tests)
+
+  add_test(NAME cli_version_test COMMAND physfx --version)
+  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.2.0-dev")
+  add_test(NAME cli_empty_pipeline_test
+           COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/empty_pipeline.json")
+  set_tests_properties(cli_empty_pipeline_test PROPERTIES
+    PASS_REGULAR_EXPRESSION "stage=perception.*stage=semantics.*stage=editing.*stage=physics.*stage=render")
+  add_test(NAME cli_semantic_pipeline_test
+           COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/semantic_edit_pipeline.json")
+  set_tests_properties(cli_semantic_pipeline_test PROPERTIES
+    PASS_REGULAR_EXPRESSION "stage=perception.*stage=semantics.*stage=editing.*stage=physics.*stage=render")
+
+  find_package(Python 3.11 COMPONENTS Interpreter QUIET)
+  if(Python_Interpreter_FOUND)
+    add_test(NAME copyright_header_test
+      COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_copyright.py"
+              --root "${CMAKE_SOURCE_DIR}")
+  else()
+    message(STATUS "未找到 Python 3.11；跳过版权头检查测试")
+  endif()
+
+  if(GTest_FOUND)
+    add_executable(physfx_gtest_smoke tests/google_test_smoke.cpp)
+    target_link_libraries(physfx_gtest_smoke PRIVATE GTest::gtest_main physfx_core)
+    include(GoogleTest)
+    gtest_discover_tests(physfx_gtest_smoke)
+  else()
+    message(STATUS "未找到 GoogleTest；使用无第三方依赖的 CTest 桩测试")
+  endif()
+endif()
+
+if(PHYSFX_BUILD_PYTHON)
+  add_subdirectory(bindings/python)
+endif()

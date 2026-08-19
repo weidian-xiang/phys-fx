@@ -1,0 +1,10 @@
+{
+  "name": "physfx",
+  "version-string": "0.2.0-dev",
+  "description": "PhysFX 视频世界编辑器 Phase 2 架构骨架",
+  "license": "Apache-2.0",
+  "dependencies": [
+    "gtest",
+    "pybind11"
+  ]
+}

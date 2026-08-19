@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "pipeline": "empty",
+  "frame_count": 1,
+  "input": "",
+  "output": "",
+  "stages": {
+    "perception": {"enabled": true},
+    "semantics": {"enabled": true},
+    "editing": {"enabled": true, "commands": []},
+    "physics": {"enabled": true},
+    "render": {"enabled": true, "path": "compositing"}
+  }
+}

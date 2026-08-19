@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 26, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "windows",
+      "displayName": "Windows (MinGW/NMake)",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/windows",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "PHYSFX_BUILD_TESTS": "ON"}
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/linux",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "PHYSFX_BUILD_TESTS": "ON"}
+    },
+    {
+      "name": "macos",
+      "displayName": "macOS",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/macos",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "PHYSFX_BUILD_TESTS": "ON"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "windows", "configurePreset": "windows"},
+    {"name": "linux", "configurePreset": "linux"},
+    {"name": "macos", "configurePreset": "macos"}
+  ],
+  "testPresets": [
+    {"name": "windows", "configurePreset": "windows", "output": {"outputOnFailure": true}},
+    {"name": "linux", "configurePreset": "linux", "output": {"outputOnFailure": true}},
+    {"name": "macos", "configurePreset": "macos", "output": {"outputOnFailure": true}}
+  ],
+  "workflowPresets": [
+    {
+      "name": "windows",
+      "displayName": "Windows 完整验收",
+      "steps": [
+        {"type": "configure", "name": "windows"},
+        {"type": "build", "name": "windows"},
+        {"type": "test", "name": "windows"}
+      ]
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux 完整验收",
+      "steps": [
+        {"type": "configure", "name": "linux"},
+        {"type": "build", "name": "linux"},
+        {"type": "test", "name": "linux"}
+      ]
+    },
+    {
+      "name": "macos",
+      "displayName": "macOS 完整验收",
+      "steps": [
+        {"type": "configure", "name": "macos"},
+        {"type": "build", "name": "macos"},
+        {"type": "test", "name": "macos"}
+      ]
+    }
+  ]
+}
