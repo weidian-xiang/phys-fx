@@ -1,0 +1,55 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+#
+# 本文件遵循 Apache License 2.0 开源协议，许可证全文见仓库根目录 LICENSE 文件。
+# 按 Apache-2.0 要求，修改本文件的衍生版本须在文件中保留显著修改声明。
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: PhysFX CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 安装测试与格式工具
+        run: python -m pip install pytest clang-format
+      - name: 校验 Phase 3 提交与 DCO
+        run: python tools/check_commit_msg.py --range ee6761e..HEAD
+      - name: 扫描版权头
+        run: python tools/check_copyright.py --root .
+      - name: 检查 C++ 格式
+        shell: bash
+        run: git ls-files '*.h' '*.cpp' | xargs clang-format --dry-run --Werror
+      - name: 默认零依赖构建
+        run: cmake -S . -B build/off -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON
+      - name: 编译
+        run: cmake --build build/off --parallel 2
+      - name: CTest
+        run: ctest --test-dir build/off --output-on-failure -LE needs_models
+      - name: pytest
+        run: python -m pytest -q tools/tests bindings/python/tests
+
+  optional-switches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Linux FFmpeg 开发包
+        run: sudo apt-get update && sudo apt-get install -y libavformat-dev libavcodec-dev libavutil-dev libswscale-dev
+      - name: 验证 FFmpeg ON 与 ONNX 缺失回退
+        run: cmake -S . -B build/on -DPHYSFX_WITH_FFMPEG=ON -DPHYSFX_WITH_ONNX=ON -DPHYSFX_BUILD_TESTS=ON
+      - name: 编译可选配置
+        run: cmake --build build/on --parallel 2
+      - name: 运行无模型测试
+        run: ctest --test-dir build/on --output-on-failure -LE needs_models

@@ -25,3 +25,8 @@ def test_invalid_type_and_missing_dco() -> None:
 def test_period_is_rejected() -> None:
     errors = validate("docs: 描述不能以句号结束。\nSigned-off-by: 向伟典 <xwd752438081@163.com>")
     assert errors
+
+
+def test_subject_over_50_characters_is_rejected() -> None:
+    message = "feat(core): " + "很长的描述" * 10 + "\nSigned-off-by: 向伟典 <xwd752438081@163.com>"
+    assert any("50" in error for error in validate(message))

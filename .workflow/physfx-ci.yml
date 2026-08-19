@@ -1,0 +1,45 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+#
+# 本文件遵循 Apache License 2.0 开源协议，许可证全文见仓库根目录 LICENSE 文件。
+# 按 Apache-2.0 要求，修改本文件的衍生版本须在文件中保留显著修改声明。
+#
+# SPDX-License-Identifier: Apache-2.0
+
+version: "1.0"
+name: physfx-ci
+displayName: PhysFX 主流水线
+triggers:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+stages:
+  - name: quality
+    displayName: 规范与零依赖验收
+    jobs:
+      - name: linux
+        runs-on: linux
+        steps:
+          - checkout: self
+            fetch-depth: 0
+          - run: python3 tools/check_commit_msg.py --range ee6761e..HEAD
+          - run: python3 tools/check_copyright.py --root .
+          - run: cmake -S . -B build/off -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON
+          - run: cmake --build build/off --parallel 2
+          - run: ctest --test-dir build/off --output-on-failure -LE needs_models
+          - run: python3 -m pytest -q tools/tests bindings/python/tests
+
+  - name: optional
+    displayName: 可选依赖构建
+    dependsOn: quality
+    jobs:
+      - name: switches
+        runs-on: linux
+        steps:
+          - checkout: self
+          - run: python3 tools/setup_deps.py
+          - run: cmake -S . -B build/on -DPHYSFX_WITH_FFMPEG=ON -DPHYSFX_WITH_ONNX=ON -DPHYSFX_BUILD_TESTS=ON
+          - run: cmake --build build/on --parallel 2
+          - run: ctest --test-dir build/on --output-on-failure -LE needs_models

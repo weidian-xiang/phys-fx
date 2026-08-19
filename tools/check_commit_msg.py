@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -45,8 +46,30 @@ def validate(message: str) -> list[str]:
 
 
 def main() -> int:
+    if len(sys.argv) == 3 and sys.argv[1] == "--range":
+        try:
+            output = subprocess.check_output(
+                ["git", "log", "--format=%B%x00", sys.argv[2]], text=True, encoding="utf-8"
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            print(f"无法读取提交范围: {exc}", file=sys.stderr)
+            return 2
+        failed = False
+        for index, message in enumerate(output.split("\x00"), start=1):
+            if not message.strip():
+                continue
+            errors = validate(message.strip())
+            if errors:
+                failed = True
+                print(f"范围内第 {index} 条提交不合规:", file=sys.stderr)
+                for error in errors:
+                    print(f"- {error}", file=sys.stderr)
+        if failed:
+            return 1
+        print("提交范围校验通过")
+        return 0
     if len(sys.argv) != 2:
-        print("用法: check_commit_msg.py <提交信息文件>", file=sys.stderr)
+        print("用法: check_commit_msg.py <提交信息文件> | --range <base..head>", file=sys.stderr)
         return 2
     path = Path(sys.argv[1])
     try:
