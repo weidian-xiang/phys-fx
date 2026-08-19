@@ -22,10 +22,8 @@ namespace physfx::compositing {
 SpriteCompositor::SpriteCompositor(float gain, float warmth)
     : gain_(std::max(gain, 0.0F)), warmth_(std::clamp(warmth, -1.0F, 1.0F)) {}
 
-bool SpriteCompositor::occluded(const core::SceneContext& scene,
-                                std::uint64_t frameIndex,
-                                std::uint32_t x,
-                                std::uint32_t y) const {
+bool SpriteCompositor::occluded(const core::SceneContext& scene, std::uint64_t frameIndex,
+                                std::uint32_t x, std::uint32_t y) const {
   if (!scene.semanticScene) {
     return false;
   }
@@ -44,8 +42,7 @@ bool SpriteCompositor::occluded(const core::SceneContext& scene,
   return false;
 }
 
-core::Frame SpriteCompositor::compose(const core::Frame& frame,
-                                      const core::SceneContext& scene,
+core::Frame SpriteCompositor::compose(const core::Frame& frame, const core::SceneContext& scene,
                                       const core::SimulationResult& simulation) {
   core::Frame output = frame;
   const std::size_t expected = static_cast<std::size_t>(frame.width) * frame.height * 3U;
@@ -60,9 +57,9 @@ core::Frame SpriteCompositor::compose(const core::Frame& frame,
     const int minimumY = std::max(0, static_cast<int>(std::floor(particle.position.y - radius)));
     const int maximumY = std::min(static_cast<int>(frame.height) - 1,
                                   static_cast<int>(std::ceil(particle.position.y + radius)));
-    std::array<float, 3> color = {
-        particle.color.x * gain_ * (1.0F + 0.25F * warmth_), particle.color.y * gain_,
-        particle.color.z * gain_ * (1.0F - 0.25F * warmth_)};
+    std::array<float, 3> color = {particle.color.x * gain_ * (1.0F + 0.25F * warmth_),
+                                  particle.color.y * gain_,
+                                  particle.color.z * gain_ * (1.0F - 0.25F * warmth_)};
     for (int y = minimumY; y <= maximumY; ++y) {
       for (int x = minimumX; x <= maximumX; ++x) {
         const float dx = (static_cast<float>(x) + 0.5F) - particle.position.x;

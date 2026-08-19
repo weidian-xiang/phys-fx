@@ -10,29 +10,36 @@
 
 #pragma once
 
-#include "physfx/semantics/IEntityAttributeEstimator.h"
+#include <cstdint>
+#include <vector>
+
 #include "physfx/semantics/ISegmenter.h"
 #include "physfx/semantics/ITracker.h"
 
 namespace physfx::semantics {
 
-/** @brief 返回单个假实体的分割桩。 */
-class StubSegmenter final : public ISegmenter {
+/** @brief 以提示点颜色为种子进行四连通区域生长的传统分割器。 */
+class ColorPromptSegmenter final : public ISegmenter {
  public:
+  /** @brief 创建分割器。 @param x 提示点横坐标。 @param y 提示点纵坐标。 @param tolerance RGB
+   * 欧氏距离阈值。 */
+  ColorPromptSegmenter(std::uint32_t x, std::uint32_t y, float tolerance = 60.0F);
   core::Result<std::vector<core::Entity>> segment(const core::Frame& frame) override;
+
+ private:
+  std::uint32_t x_{0};
+  std::uint32_t y_{0};
+  float tolerance_{60.0F};
 };
 
-/** @brief 原样返回实体的跟踪桩。 */
-class StubTracker final : public ITracker {
+/** @brief 以实体编号合并掩码时序并计算质心轨迹的轻量跟踪器。 */
+class CentroidTracker final : public ITracker {
  public:
   core::Result<std::vector<core::Entity>> track(const core::Frame& frame,
                                                 const std::vector<core::Entity>& entities) override;
-};
 
-/** @brief 写入占位属性的实体属性估计桩。 */
-class StubEntityAttributeEstimator final : public IEntityAttributeEstimator {
- public:
-  core::Status estimate(const core::Frame& frame, core::Entity& entity) override;
+ private:
+  std::vector<core::Entity> previous_{};
 };
 
 }  // namespace physfx::semantics

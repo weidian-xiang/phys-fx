@@ -6,10 +6,10 @@
   "perception": {"enabled": true, "implementation": "stub"},
   "semantics": {
     "enabled": true,
-    "implementation": "stub",
+    "implementation": "traditional",
     "segmenter_model": "models/sam.onnx",
     "tracker_model": "models/xmem.onnx",
-    "prompt": {"point": [320, 240]}
+    "prompt": {"point": [160, 120]}
   },
   "editing": {"enabled": true, "commands": []},
   "physics": {

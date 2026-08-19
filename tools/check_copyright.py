@@ -52,6 +52,13 @@ SOURCE_SUFFIXES = {
 # JSON、CMakePresets 和 vcpkg manifest 必须保持严格 JSON 语法，版权归属由 NOTICE/COPYRIGHT 覆盖。
 SOURCE_NAMES = {"CMakeLists.txt"}
 SKIP_PARTS = {".git", ".venv", ".idea", "build", "build-python", "build-python313", "out"}
+SKIP_PREFIXES = {
+    ("third_party", "cache"),
+    ("third_party", "packages"),
+    ("third_party", "ffmpeg"),
+    ("third_party", "onnxruntime"),
+    ("models",),
+}
 
 
 def is_source(path: Path) -> bool:
@@ -67,6 +74,8 @@ def iter_sources(root: Path):
         except ValueError:
             continue
         if any(part in SKIP_PARTS for part in relative_parts):
+            continue
+        if any(relative_parts[: len(prefix)] == prefix for prefix in SKIP_PREFIXES):
             continue
         yield path
 

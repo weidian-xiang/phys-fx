@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <utility>
 
 extern "C" {
@@ -30,14 +31,24 @@ namespace {
 PlatformStatus ffmpegError(const char* operation, int error) {
   char buffer[AV_ERROR_MAX_STRING_SIZE]{};
   av_strerror(error, buffer, sizeof(buffer));
-  return {core::StatusCode::kIoError,
-          std::string(operation) + " 失败: " + buffer + " (FFmpeg 错误码 " +
-              std::to_string(error) + ")"};
+  return {core::StatusCode::kIoError, std::string(operation) + " 失败: " + buffer +
+                                          " (FFmpeg 错误码 " + std::to_string(error) + ")"};
+}
+
+PlatformStatus verifyLicenseBoundary() {
+  const char* configuration = avcodec_configuration();
+  const std::string_view flags = configuration == nullptr ? std::string_view{} : configuration;
+  if (flags.find("--enable-gpl") != std::string_view::npos ||
+      flags.find("--enable-nonfree") != std::string_view::npos) {
+    return {core::StatusCode::kDisabled,
+            "检测到 GPL 或 nonfree FFmpeg 构建；PhysFX 仅允许 LGPL 动态构建"};
+  }
+  return core::Status::success();
 }
 
 double streamRate(const AVStream* stream) {
-  const AVRational rate = stream->avg_frame_rate.num != 0 ? stream->avg_frame_rate
-                                                           : stream->r_frame_rate;
+  const AVRational rate =
+      stream->avg_frame_rate.num != 0 ? stream->avg_frame_rate : stream->r_frame_rate;
   return rate.num == 0 || rate.den == 0 ? 0.0 : av_q2d(rate);
 }
 
@@ -85,6 +96,10 @@ FFmpegVideoReader& FFmpegVideoReader::operator=(FFmpegVideoReader&&) noexcept = 
 
 PlatformStatus FFmpegVideoReader::open(const std::filesystem::path& path) {
   impl_->reset();
+  const auto licenseStatus = verifyLicenseBoundary();
+  if (!licenseStatus.ok()) {
+    return licenseStatus;
+  }
   const std::string utf8Path = path.string();
   int result = avformat_open_input(&impl_->format, utf8Path.c_str(), nullptr, nullptr);
   if (result < 0) {
@@ -159,8 +174,7 @@ PlatformStatus FFmpegVideoReader::read(core::Frame& frame) {
       frame.format = core::PixelFormat::kRgb8;
       frame.frameRate = impl_->frameRate;
       frame.totalFrames = impl_->totalFrames;
-      frame.presentationTimestamp =
-          impl_->decoded->pts == AV_NOPTS_VALUE ? 0 : impl_->decoded->pts;
+      frame.presentationTimestamp = impl_->decoded->pts == AV_NOPTS_VALUE ? 0 : impl_->decoded->pts;
       const AVStream* stream = impl_->format->streams[impl_->streamIndex];
       frame.timestampSeconds =
           impl_->decoded->pts == AV_NOPTS_VALUE
@@ -183,7 +197,7 @@ PlatformStatus FFmpegVideoReader::read(core::Frame& frame) {
       return {core::StatusCode::kNotFound, "视频读取结束"};
     }
 
-    do {
+    while (true) {
       result = av_read_frame(impl_->format, impl_->packet);
       if (result == AVERROR_EOF) {
         impl_->flushing = true;
@@ -198,8 +212,10 @@ PlatformStatus FFmpegVideoReader::read(core::Frame& frame) {
       }
       if (impl_->packet->stream_index != impl_->streamIndex) {
         av_packet_unref(impl_->packet);
+        continue;
       }
-    } while (impl_->packet->stream_index != impl_->streamIndex);
+      break;
+    }
     if (impl_->flushing) {
       continue;
     }

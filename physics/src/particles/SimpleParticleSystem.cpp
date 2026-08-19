@@ -55,8 +55,8 @@ core::Vec3 SimpleParticleSystem::emitterFor(const core::Frame& frame,
 
 float SimpleParticleSystem::randomSigned() noexcept {
   randomState_ = randomState_ * 1664525U + 1013904223U;
-  const float normalized = static_cast<float>((randomState_ >> 8U) & 0x00FFFFFFU) /
-                           static_cast<float>(0x00FFFFFFU);
+  const float normalized =
+      static_cast<float>((randomState_ >> 8U) & 0x00FFFFFFU) / static_cast<float>(0x00FFFFFFU);
   return normalized * 2.0F - 1.0F;
 }
 
@@ -81,9 +81,10 @@ core::Result<core::SimulationResult> SimpleParticleSystem::simulate(
       particle.sizePixels =
           config_.endSizePixels + (config_.startSizePixels - config_.endSizePixels) * life;
     }
-    active_.erase(std::remove_if(active_.begin(), active_.end(), [](const ActiveParticle& item) {
-                    return item.particle.lifetimeSeconds <= 0.0F;
-                  }),
+    active_.erase(std::remove_if(active_.begin(), active_.end(),
+                                 [](const ActiveParticle& item) {
+                                   return item.particle.lifetimeSeconds <= 0.0F;
+                                 }),
                   active_.end());
 
     emissionCarry_ += config_.emissionRate * dt;

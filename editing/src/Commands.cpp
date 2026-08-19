@@ -8,14 +8,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <utility>
+
 #include "physfx/editing/commands/ChangeMaterial.h"
 #include "physfx/editing/commands/DeleteEntity.h"
 #include "physfx/editing/commands/EmptyCommand.h"
 #include "physfx/editing/commands/MoveEntity.h"
 #include "physfx/editing/commands/SetTimeOfDay.h"
 #include "physfx/editing/commands/SetWeather.h"
-
-#include <utility>
 
 namespace physfx::editing::commands {
 

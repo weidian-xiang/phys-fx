@@ -26,14 +26,12 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-void logStage(std::string_view stage,
-              const Clock::time_point startedAt,
-              std::string_view status) {
+void logStage(std::string_view stage, const Clock::time_point startedAt, std::string_view status) {
   const auto elapsed =
       std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - startedAt);
   std::ostringstream message;
-  message << "stage=" << stage << " status=" << status << " elapsed_ms="
-          << static_cast<double>(elapsed.count()) / 1000.0;
+  message << "stage=" << stage << " status=" << status
+          << " elapsed_ms=" << static_cast<double>(elapsed.count()) / 1000.0;
   core::Logger::info(message.str());
 }
 
@@ -104,8 +102,7 @@ bool Pipeline::run(const core::Config& config) {
     startedAt = Clock::now();
     context.scene.semanticScene = std::make_shared<core::SemanticScene>();
     if (config.semanticsEnabled) {
-      if (!dependencies_.segmenter || !dependencies_.tracker ||
-          !dependencies_.attributeEstimator) {
+      if (!dependencies_.segmenter || !dependencies_.tracker || !dependencies_.attributeEstimator) {
         core::Logger::error("stage=semantics status=error reason=dependency_missing");
         return false;
       }
@@ -183,8 +180,8 @@ bool Pipeline::run(const core::Config& config) {
         return false;
       }
       if (!dependencies_.videoWriter->isOpen()) {
-        const auto status = dependencies_.videoWriter->open(
-            config.outputPath, context.frame.width, context.frame.height);
+        const auto status = dependencies_.videoWriter->open(config.outputPath, context.frame.width,
+                                                            context.frame.height);
         if (!status.ok()) {
           core::Logger::error("video_io status=error reason=open_output_failed message=" +
                               status.message);

@@ -24,8 +24,10 @@ stages:
         steps:
           - checkout: self
             fetch-depth: 0
+          - run: python3 -m pip install --user pytest clang-format
           - run: python3 tools/check_commit_msg.py --range ee6761e..HEAD
           - run: python3 tools/check_copyright.py --root .
+          - run: git ls-files '*.h' '*.cpp' | xargs clang-format --dry-run --Werror
           - run: cmake -S . -B build/off -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON
           - run: cmake --build build/off --parallel 2
           - run: ctest --test-dir build/off --output-on-failure -LE needs_models
@@ -39,7 +41,7 @@ stages:
         runs-on: linux
         steps:
           - checkout: self
-          - run: python3 tools/setup_deps.py
+          - run: python3 tools/setup_deps.py --component all
           - run: cmake -S . -B build/on -DPHYSFX_WITH_FFMPEG=ON -DPHYSFX_WITH_ONNX=ON -DPHYSFX_BUILD_TESTS=ON
           - run: cmake --build build/on --parallel 2
-          - run: ctest --test-dir build/on --output-on-failure -LE needs_models
+          - run: LD_LIBRARY_PATH="$PWD/third_party/ffmpeg/lib:$PWD/third_party/onnxruntime/runtimes/linux-x64/native:$LD_LIBRARY_PATH" ctest --test-dir build/on --output-on-failure -LE needs_models

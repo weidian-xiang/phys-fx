@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include <utility>
 
 extern "C" {
@@ -29,9 +30,19 @@ namespace {
 PlatformStatus ffmpegError(const char* operation, int error) {
   char buffer[AV_ERROR_MAX_STRING_SIZE]{};
   av_strerror(error, buffer, sizeof(buffer));
-  return {core::StatusCode::kIoError,
-          std::string(operation) + " 失败: " + buffer + " (FFmpeg 错误码 " +
-              std::to_string(error) + ")"};
+  return {core::StatusCode::kIoError, std::string(operation) + " 失败: " + buffer +
+                                          " (FFmpeg 错误码 " + std::to_string(error) + ")"};
+}
+
+PlatformStatus verifyLicenseBoundary() {
+  const char* configuration = avcodec_configuration();
+  const std::string_view flags = configuration == nullptr ? std::string_view{} : configuration;
+  if (flags.find("--enable-gpl") != std::string_view::npos ||
+      flags.find("--enable-nonfree") != std::string_view::npos) {
+    return {core::StatusCode::kDisabled,
+            "检测到 GPL 或 nonfree FFmpeg 构建；PhysFX 仅允许 LGPL 动态构建"};
+  }
+  return core::Status::success();
 }
 
 }  // namespace
@@ -53,8 +64,14 @@ struct FFmpegVideoWriter::Impl {
     if (codec != nullptr && format != nullptr && stream != nullptr && packet != nullptr &&
         headerWritten && avcodec_send_frame(codec, nullptr) >= 0) {
       while (avcodec_receive_packet(codec, packet) >= 0) {
+        if (packet->duration <= 0) {
+          packet->duration = 1;
+        }
         av_packet_rescale_ts(packet, codec->time_base, stream->time_base);
         packet->stream_index = stream->index;
+        // OpenH264 可能把 flush 阶段产出的最后一帧标为 DISCARD；该包仍对应用户提交的
+        // 有效帧，清除标记以保证编码→解码帧数守恒。
+        packet->flags &= ~AV_PKT_FLAG_DISCARD;
         av_interleaved_write_frame(format, packet);
         av_packet_unref(packet);
       }
@@ -86,10 +103,13 @@ FFmpegVideoWriter::~FFmpegVideoWriter() = default;
 FFmpegVideoWriter::FFmpegVideoWriter(FFmpegVideoWriter&&) noexcept = default;
 FFmpegVideoWriter& FFmpegVideoWriter::operator=(FFmpegVideoWriter&&) noexcept = default;
 
-PlatformStatus FFmpegVideoWriter::open(const std::filesystem::path& path,
-                                       std::uint32_t width,
+PlatformStatus FFmpegVideoWriter::open(const std::filesystem::path& path, std::uint32_t width,
                                        std::uint32_t height) {
   impl_->reset();
+  const auto licenseStatus = verifyLicenseBoundary();
+  if (!licenseStatus.ok()) {
+    return licenseStatus;
+  }
   if (width == 0 || height == 0) {
     return {core::StatusCode::kInvalidArgument, "输出视频尺寸必须大于零"};
   }
@@ -100,7 +120,10 @@ PlatformStatus FFmpegVideoWriter::open(const std::filesystem::path& path,
   if (result < 0 || impl_->format == nullptr) {
     return ffmpegError("创建输出封装器", result < 0 ? result : AVERROR_UNKNOWN);
   }
-  const AVCodec* encoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+  const AVCodec* encoder = avcodec_find_encoder_by_name("libopenh264");
+  if (encoder == nullptr) {
+    encoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+  }
   if (encoder == nullptr) {
     impl_->reset();
     return {core::StatusCode::kNotFound, "未找到 H.264 编码器；请安装 LGPL 动态 FFmpeg 编码组件"};
@@ -183,13 +206,18 @@ PlatformStatus FFmpegVideoWriter::write(const core::Frame& frame) {
   sws_scale(impl_->scaler, sourceData, sourceLinesize, 0, static_cast<int>(impl_->height),
             impl_->yuv->data, impl_->yuv->linesize);
   impl_->yuv->pts = static_cast<std::int64_t>(frame.index);
+  impl_->yuv->duration = 1;
   int result = avcodec_send_frame(impl_->codec, impl_->yuv);
   if (result < 0) {
     return ffmpegError("发送帧到编码器", result);
   }
   while ((result = avcodec_receive_packet(impl_->codec, impl_->packet)) >= 0) {
+    if (impl_->packet->duration <= 0) {
+      impl_->packet->duration = 1;
+    }
     av_packet_rescale_ts(impl_->packet, impl_->codec->time_base, impl_->stream->time_base);
     impl_->packet->stream_index = impl_->stream->index;
+    impl_->packet->flags &= ~AV_PKT_FLAG_DISCARD;
     const int writeResult = av_interleaved_write_frame(impl_->format, impl_->packet);
     av_packet_unref(impl_->packet);
     if (writeResult < 0) {

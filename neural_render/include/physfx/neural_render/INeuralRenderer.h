@@ -24,8 +24,7 @@ class INeuralRenderer : public core::IRenderPath {
 class PassthroughNeuralRenderer final : public INeuralRenderer {
  public:
   [[nodiscard]] std::string_view name() const noexcept override;
-  core::Result<core::Frame> render(const core::Frame& frame,
-                                   const core::SceneContext& scene,
+  core::Result<core::Frame> render(const core::Frame& frame, const core::SceneContext& scene,
                                    const core::SimulationResult& simulation) override;
 };
 

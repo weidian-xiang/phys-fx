@@ -26,8 +26,7 @@ class FFmpegVideoWriter final : public IVideoWriter {
   FFmpegVideoWriter(const FFmpegVideoWriter&) = delete;
   FFmpegVideoWriter& operator=(const FFmpegVideoWriter&) = delete;
 
-  PlatformStatus open(const std::filesystem::path& path,
-                      std::uint32_t width,
+  PlatformStatus open(const std::filesystem::path& path, std::uint32_t width,
                       std::uint32_t height) override;
   PlatformStatus write(const core::Frame& frame) override;
   void close() noexcept override;

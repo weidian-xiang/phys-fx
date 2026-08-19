@@ -27,8 +27,8 @@ class OnnxTracker final : public ITracker {
   OnnxTracker(const OnnxTracker&) = delete;
   OnnxTracker& operator=(const OnnxTracker&) = delete;
 
-  core::Result<std::vector<core::Entity>> track(
-      const core::Frame& frame, const std::vector<core::Entity>& entities) override;
+  core::Result<std::vector<core::Entity>> track(const core::Frame& frame,
+                                                const std::vector<core::Entity>& entities) override;
 
  private:
   struct Impl;

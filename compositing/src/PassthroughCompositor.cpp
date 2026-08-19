@@ -8,18 +8,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "physfx/compositing/ColorMatcher.h"
-#include "physfx/compositing/CompositingRenderPath.h"
-#include "physfx/compositing/OcclusionBlender.h"
 #include "physfx/compositing/PassthroughCompositor.h"
-#include "physfx/compositing/ShadowProjector.h"
 
 #include <utility>
 
+#include "physfx/compositing/ColorMatcher.h"
+#include "physfx/compositing/CompositingRenderPath.h"
+#include "physfx/compositing/OcclusionBlender.h"
+#include "physfx/compositing/ShadowProjector.h"
+
 namespace physfx::compositing {
 
-core::Frame PassthroughCompositor::compose(const core::Frame& frame,
-                                           const core::SceneContext&,
+core::Frame PassthroughCompositor::compose(const core::Frame& frame, const core::SceneContext&,
                                            const core::SimulationResult&) {
   return frame;
 }
@@ -37,14 +37,11 @@ core::Frame ColorMatcher::match(const core::Frame& frame, const core::SceneConte
 CompositingRenderPath::CompositingRenderPath(std::unique_ptr<ICompositor> compositor)
     : compositor_(std::move(compositor)) {}
 
-std::string_view CompositingRenderPath::name() const noexcept {
-  return "compositing_passthrough";
-}
+std::string_view CompositingRenderPath::name() const noexcept { return "compositing_passthrough"; }
 
-core::Result<core::Frame> CompositingRenderPath::render(
-    const core::Frame& frame,
-    const core::SceneContext& scene,
-    const core::SimulationResult& simulation) {
+core::Result<core::Frame> CompositingRenderPath::render(const core::Frame& frame,
+                                                        const core::SceneContext& scene,
+                                                        const core::SimulationResult& simulation) {
   if (!compositor_) {
     return core::Status{core::StatusCode::kInternalError, "合成器未装配"};
   }
