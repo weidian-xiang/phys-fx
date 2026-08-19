@@ -12,6 +12,7 @@ project(PhysFX VERSION 0.2.0 LANGUAGES CXX)
 
 option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
+option(PHYSFX_WITH_FFMPEG "启用 FFmpeg 动态视频 IO（需要 LGPL 开发包）" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -78,13 +79,47 @@ add_library(physfx_plugins STATIC
 target_include_directories(physfx_plugins PUBLIC plugins/include)
 target_link_libraries(physfx_plugins PUBLIC physfx_core)
 
-add_library(physfx_platform STATIC
+set(PHYSFX_PLATFORM_SOURCES
   platform/src/StubVideoReader.cpp
   platform/src/StubVideoWriter.cpp
   platform/src/StubGpuContext.cpp
+  platform/src/VideoIoFactory.cpp
 )
+set(PHYSFX_FFMPEG_AVAILABLE OFF)
+if(PHYSFX_WITH_FFMPEG)
+  find_path(FFMPEG_INCLUDE_DIR libavformat/avformat.h
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/ffmpeg/include" ENV FFMPEG_ROOT)
+  find_library(FFMPEG_AVFORMAT_LIBRARY NAMES avformat libavformat
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/ffmpeg/lib" ENV FFMPEG_ROOT)
+  find_library(FFMPEG_AVCODEC_LIBRARY NAMES avcodec libavcodec
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/ffmpeg/lib" ENV FFMPEG_ROOT)
+  find_library(FFMPEG_AVUTIL_LIBRARY NAMES avutil libavutil
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/ffmpeg/lib" ENV FFMPEG_ROOT)
+  find_library(FFMPEG_SWSCALE_LIBRARY NAMES swscale libswscale
+    PATHS "${CMAKE_SOURCE_DIR}/third_party/ffmpeg/lib" ENV FFMPEG_ROOT)
+  if(FFMPEG_INCLUDE_DIR AND FFMPEG_AVFORMAT_LIBRARY AND FFMPEG_AVCODEC_LIBRARY
+     AND FFMPEG_AVUTIL_LIBRARY AND FFMPEG_SWSCALE_LIBRARY)
+    set(PHYSFX_FFMPEG_AVAILABLE ON)
+    list(APPEND PHYSFX_PLATFORM_SOURCES
+      platform/src/ffmpeg/FFmpegVideoReader.cpp
+      platform/src/ffmpeg/FFmpegVideoWriter.cpp)
+    message(STATUS "启用 FFmpeg 动态视频 IO")
+  else()
+    message(WARNING "请求启用 FFmpeg，但未找到 LGPL 开发包；回退到视频 IO 桩")
+  endif()
+endif()
+add_library(physfx_platform STATIC ${PHYSFX_PLATFORM_SOURCES})
 target_include_directories(physfx_platform PUBLIC platform/include)
 target_link_libraries(physfx_platform PUBLIC physfx_core)
+if(PHYSFX_FFMPEG_AVAILABLE)
+  target_include_directories(physfx_platform PRIVATE "${FFMPEG_INCLUDE_DIR}")
+  target_compile_definitions(physfx_platform PRIVATE PHYSFX_FFMPEG_AVAILABLE=1)
+  target_link_libraries(physfx_platform PRIVATE
+    "${FFMPEG_AVFORMAT_LIBRARY}" "${FFMPEG_AVCODEC_LIBRARY}"
+    "${FFMPEG_AVUTIL_LIBRARY}" "${FFMPEG_SWSCALE_LIBRARY}")
+else()
+  target_compile_definitions(physfx_platform PRIVATE PHYSFX_FFMPEG_AVAILABLE=0)
+endif()
 
 add_library(physfx_cloud INTERFACE)
 target_include_directories(physfx_cloud INTERFACE cloud/include)

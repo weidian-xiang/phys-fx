@@ -35,6 +35,12 @@ struct Frame {
   PixelFormat format{PixelFormat::kUnknown};
   /** @brief 交给平台层的原始像素缓冲。 */
   std::vector<std::uint8_t> pixels{};
+  /** @brief 解码器原始呈现时间戳（以输入流 time_base 归一化前的整数值）。 */
+  std::int64_t presentationTimestamp{0};
+  /** @brief 输入流帧率；未知时为 0。 */
+  double frameRate{0.0};
+  /** @brief 输入流总帧数；未知时为 0。 */
+  std::uint64_t totalFrames{0};
 };
 
 }  // namespace physfx::core
