@@ -42,11 +42,45 @@ void logStage(std::string_view stage,
 Pipeline::Pipeline(PipelineDependencies dependencies) : dependencies_(std::move(dependencies)) {}
 
 bool Pipeline::run(const core::Config& config) {
-  const std::size_t frameCount = config.frameCount == 0 ? 1 : config.frameCount;
-  for (std::size_t index = 0; index < frameCount; ++index) {
+  const bool useVideoInput = !config.inputPath.empty();
+  if (useVideoInput) {
+    if (!dependencies_.videoReader) {
+      core::Logger::error("video_io status=error reason=reader_missing");
+      return false;
+    }
+    const auto status = dependencies_.videoReader->open(config.inputPath);
+    if (!status.ok()) {
+      core::Logger::error("video_io status=error reason=open_input_failed message=" +
+                          status.message);
+      return false;
+    }
+  }
+  if (config.physicsEnabled &&
+      (!dependencies_.physicsSimulator ||
+       !dependencies_.physicsSimulator->initialize(dependencies_.physicsConfig).ok())) {
+    core::Logger::error("stage=physics status=error reason=initialize_failed");
+    return false;
+  }
+
+  const std::size_t syntheticFrameCount = config.frameCount == 0 ? 1 : config.frameCount;
+  std::size_t index = 0;
+  bool wroteAnyFrame = false;
+  while ((useVideoInput && (config.frameCount == 0 || index < config.frameCount)) ||
+         (!useVideoInput && index < syntheticFrameCount)) {
     PipelineContext context{};
-    context.frame.index = index;
-    context.frame.timestampSeconds = static_cast<double>(index) / 30.0;
+    if (useVideoInput) {
+      const auto status = dependencies_.videoReader->read(context.frame);
+      if (status.code == core::StatusCode::kNotFound) {
+        break;
+      }
+      if (!status.ok()) {
+        core::Logger::error("video_io status=error reason=read_failed message=" + status.message);
+        return false;
+      }
+    } else {
+      context.frame.index = index;
+      context.frame.timestampSeconds = static_cast<double>(index) / 30.0;
+    }
 
     auto startedAt = Clock::now();
     if (config.perceptionEnabled) {
@@ -114,11 +148,6 @@ bool Pipeline::run(const core::Config& config) {
 
     startedAt = Clock::now();
     if (config.physicsEnabled) {
-      if (!dependencies_.physicsSimulator ||
-          !dependencies_.physicsSimulator->initialize({}).ok()) {
-        core::Logger::error("stage=physics status=error reason=initialize_failed");
-        return false;
-      }
       auto simulation = dependencies_.physicsSimulator->simulate(context.frame, context.scene);
       if (!simulation.ok()) {
         core::Logger::error("stage=physics status=error reason=simulate_failed");
@@ -147,6 +176,39 @@ bool Pipeline::run(const core::Config& config) {
     } else {
       logStage("render", startedAt, "disabled");
     }
+
+    if (!config.outputPath.empty()) {
+      if (!dependencies_.videoWriter) {
+        core::Logger::error("video_io status=error reason=writer_missing");
+        return false;
+      }
+      if (!dependencies_.videoWriter->isOpen()) {
+        const auto status = dependencies_.videoWriter->open(
+            config.outputPath, context.frame.width, context.frame.height);
+        if (!status.ok()) {
+          core::Logger::error("video_io status=error reason=open_output_failed message=" +
+                              status.message);
+          return false;
+        }
+      }
+      const auto status = dependencies_.videoWriter->write(context.frame);
+      if (!status.ok()) {
+        core::Logger::error("video_io status=error reason=write_failed message=" + status.message);
+        return false;
+      }
+      wroteAnyFrame = true;
+    }
+    ++index;
+  }
+  if (dependencies_.videoReader) dependencies_.videoReader->close();
+  if (dependencies_.videoWriter) dependencies_.videoWriter->close();
+  if (useVideoInput && index == 0) {
+    core::Logger::error("video_io status=error reason=no_frames");
+    return false;
+  }
+  if (!config.outputPath.empty() && !wroteAnyFrame) {
+    core::Logger::error("video_io status=error reason=no_output_frames");
+    return false;
   }
   return true;
 }

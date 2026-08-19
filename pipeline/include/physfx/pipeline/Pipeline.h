@@ -22,6 +22,8 @@
 #include "physfx/perception/IOcclusionEstimator.h"
 #include "physfx/physics/IPhysicsSimulator.h"
 #include "physfx/pipeline/Stage.h"
+#include "physfx/platform/IVideoReader.h"
+#include "physfx/platform/IVideoWriter.h"
 #include "physfx/semantics/IEntityAttributeEstimator.h"
 #include "physfx/semantics/ISegmenter.h"
 #include "physfx/semantics/ITracker.h"
@@ -40,7 +42,10 @@ struct PipelineDependencies {
   std::unique_ptr<semantics::IEntityAttributeEstimator> attributeEstimator;
   std::unique_ptr<editing::EditCommandStack> editCommandStack;
   std::unique_ptr<physics::IPhysicsSimulator> physicsSimulator;
+  physics::SimConfig physicsConfig{};
   std::unique_ptr<core::IRenderPath> renderPath;
+  std::unique_ptr<platform::IVideoReader> videoReader;
+  std::unique_ptr<platform::IVideoWriter> videoWriter;
 };
 
 /**

@@ -55,6 +55,39 @@ std::string readString(const std::string& text, std::string_view key) {
   return secondQuote == std::string::npos ? std::string{} : text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
 }
 
+std::string readStringInBlock(const std::string& text,
+                              std::string_view block,
+                              std::string_view key,
+                              std::string fallback) {
+  const auto blockPosition = text.find('"' + std::string(block) + '"');
+  if (blockPosition == std::string::npos) return fallback;
+  const auto blockEnd = text.find('}', blockPosition);
+  const auto keyPosition = text.find('"' + std::string(key) + '"', blockPosition);
+  if (keyPosition == std::string::npos || (blockEnd != std::string::npos && keyPosition > blockEnd)) {
+    return fallback;
+  }
+  const auto firstQuote = text.find('"', text.find(':', keyPosition) + 1);
+  const auto secondQuote = firstQuote == std::string::npos ? std::string::npos
+                                                           : text.find('"', firstQuote + 1);
+  return secondQuote == std::string::npos
+             ? fallback
+             : text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+}
+
+std::size_t readSizeInBlock(const std::string& text,
+                            std::string_view block,
+                            std::string_view key,
+                            std::size_t fallback) {
+  const auto blockPosition = text.find('"' + std::string(block) + '"');
+  if (blockPosition == std::string::npos) return fallback;
+  const auto blockEnd = text.find('}', blockPosition);
+  const auto keyPosition = text.find('"' + std::string(key) + '"', blockPosition);
+  if (keyPosition == std::string::npos || (blockEnd != std::string::npos && keyPosition > blockEnd)) {
+    return fallback;
+  }
+  return readSize(text.substr(keyPosition, blockEnd - keyPosition), key, fallback);
+}
+
 }  // namespace
 
 Config Config::fromFile(const std::filesystem::path& path) {
@@ -77,6 +110,20 @@ Config Config::fromFile(const std::filesystem::path& path) {
   if (text.find("\"path\": \"neural\"") != std::string::npos) {
     config.renderPath = RenderPathKind::kNeural;
   }
+  config.semanticsBackend =
+      readStringInBlock(text, "semantics", "implementation", config.semanticsBackend);
+  config.segmenterModelPath =
+      readStringInBlock(text, "semantics", "segmenter_model", config.segmenterModelPath);
+  config.trackerModelPath =
+      readStringInBlock(text, "semantics", "tracker_model", config.trackerModelPath);
+  config.physicsBackend =
+      readStringInBlock(text, "physics", "implementation", config.physicsBackend);
+  config.compositorBackend =
+      readStringInBlock(text, "render", "implementation", config.compositorBackend);
+  config.particlePreset =
+      readStringInBlock(text, "physics", "preset", config.particlePreset);
+  config.boundEntityId = static_cast<std::uint64_t>(
+      readSizeInBlock(text, "physics", "bound_entity_id", config.boundEntityId));
   return config;
 }
 

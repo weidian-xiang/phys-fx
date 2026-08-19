@@ -165,6 +165,7 @@ target_link_libraries(physfx_pipeline PUBLIC
   physfx_compositing
   physfx_neural_render
   physfx_plugins
+  physfx_platform
 )
 
 add_subdirectory(apps/cli)
