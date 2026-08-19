@@ -80,12 +80,14 @@ target_link_libraries(physfx_editing PUBLIC physfx_core)
 
 add_library(physfx_physics STATIC
   physics/src/mock/MockSimulator.cpp
+  physics/src/particles/SimpleParticleSystem.cpp
 )
 target_include_directories(physfx_physics PUBLIC physics/include)
 target_link_libraries(physfx_physics PUBLIC physfx_core)
 
 add_library(physfx_compositing STATIC
   compositing/src/PassthroughCompositor.cpp
+  compositing/src/sprite/SpriteCompositor.cpp
 )
 target_include_directories(physfx_compositing PUBLIC compositing/include)
 target_link_libraries(physfx_compositing PUBLIC physfx_core)
@@ -181,6 +183,9 @@ if(PHYSFX_BUILD_TESTS)
   add_executable(physfx_physics_tests physics/tests/physics_dummy_test.cpp)
   target_link_libraries(physfx_physics_tests PRIVATE physfx_physics)
   add_test(NAME physics_dummy_test COMMAND physfx_physics_tests)
+  add_executable(physfx_particle_system_tests physics/tests/simple_particle_system_test.cpp)
+  target_link_libraries(physfx_particle_system_tests PRIVATE physfx_physics)
+  add_test(NAME simple_particle_system_test COMMAND physfx_particle_system_tests)
 
   add_executable(physfx_semantics_tests semantics/tests/semantics_dummy_test.cpp)
   target_link_libraries(physfx_semantics_tests PRIVATE physfx_semantics)
@@ -193,6 +198,9 @@ if(PHYSFX_BUILD_TESTS)
   add_executable(physfx_compositing_tests compositing/tests/compositing_dummy_test.cpp)
   target_link_libraries(physfx_compositing_tests PRIVATE physfx_compositing)
   add_test(NAME compositing_dummy_test COMMAND physfx_compositing_tests)
+  add_executable(physfx_sprite_compositor_tests compositing/tests/sprite_compositor_test.cpp)
+  target_link_libraries(physfx_sprite_compositor_tests PRIVATE physfx_compositing)
+  add_test(NAME sprite_compositor_test COMMAND physfx_sprite_compositor_tests)
 
   add_executable(physfx_neural_render_tests neural_render/tests/neural_render_dummy_test.cpp)
   target_link_libraries(physfx_neural_render_tests PRIVATE physfx_neural_render)
