@@ -34,6 +34,11 @@ PR 必须通过构建、CTest、pytest、版权扫描、提交规范和 DCO 检�
 逐条签署的提交历史；合入后删除远端工作分支。公开分支同步使用 `git merge master`，
 不改写历史。
 
+Gitee 生成的合并提交可能使用平台固定的 `Merge pull request ...` 首行且不附 DCO。
+`tools/check_commit_msg.py --range` 会根据父提交数量识别并跳过这类平台合并提交，
+但仍逐条严格校验合并前的普通提交；贡献者提交本身仍必须符合 Conventional Commits
+并包含 DCO。
+
 Gitee 后台保护分支路径：仓库设置 → 分支管理 → 分支保护 → 添加 `master`，限制
 推送和强制推送权限，仅允许 PR 合入。当前单人维护期允许作者自审，但仍须完整勾选
 PR 清单。

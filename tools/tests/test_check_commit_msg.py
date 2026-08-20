@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0
 """
 
-from tools.check_commit_msg import validate
+from tools.check_commit_msg import is_merge_commit, validate
 
 
 def test_valid_commit_message() -> None:
@@ -30,3 +30,8 @@ def test_period_is_rejected() -> None:
 def test_subject_over_50_characters_is_rejected() -> None:
     message = "feat(core): " + "很长的描述" * 10 + "\nSigned-off-by: 向伟典 <xwd752438081@163.com>"
     assert any("50" in error for error in validate(message))
+
+
+def test_platform_merge_commit_is_detected() -> None:
+    assert is_merge_commit("1111111 2222222")
+    assert not is_merge_commit("1111111")

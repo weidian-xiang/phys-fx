@@ -45,17 +45,30 @@ def validate(message: str) -> list[str]:
     return errors
 
 
+def is_merge_commit(parents: str) -> bool:
+    """平台合并提交通常有两个或更多父提交，格式由托管平台生成。"""
+    return len(parents.split()) > 1
+
+
 def main() -> int:
     if len(sys.argv) == 3 and sys.argv[1] == "--range":
         try:
             output = subprocess.check_output(
-                ["git", "log", "--format=%B%x00", sys.argv[2]], text=True, encoding="utf-8"
+                ["git", "log", "--format=%H%x00%P%x00%B%x00", sys.argv[2]],
+                text=True,
+                encoding="utf-8",
             )
         except (OSError, subprocess.CalledProcessError) as exc:
             print(f"无法读取提交范围: {exc}", file=sys.stderr)
             return 2
         failed = False
-        for index, message in enumerate(output.split("\x00"), start=1):
+        for index, record in enumerate(output.split("\x00\n"), start=1):
+            fields = record.split("\x00", 2)
+            if len(fields) != 3:
+                continue
+            _, parents, message = fields
+            if is_merge_commit(parents):
+                continue
             if not message.strip():
                 continue
             errors = validate(message.strip())
