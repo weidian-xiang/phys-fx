@@ -38,8 +38,18 @@ Gitee 后台保护分支路径：仓库设置 → 分支管理 → 分支保护 
 推送和强制推送权限，仅允许 PR 合入。当前单人维护期允许作者自审，但仍须完整勾选
 PR 清单。
 
+## Gitee 主仓与 GitHub 镜像
+
+仓库采用单向镜像：Gitee（`https://gitee.com/xiang-weidian/phys-fx`）是唯一主仓，
+GitHub（`https://github.com/weidian-xiang/phys-fx`）是只读镜像。Issue、PR、发布和
+标签均在 Gitee 完成，禁止从 GitHub 反向开发、推送或创建标签。
+
+本地远程约定为 `origin`=Gitee、`github`=GitHub 镜像；`github` 配置不可用的 push
+URL，防止误推。镜像配置和同步后校验命令见
+[`docs/mirror-sync.md`](mirror-sync.md)。
+
 ## 发布
 
 版本遵循 SemVer。Phase 3 使用 `release/v0.2.0` 准备发布，合入后创建附注标签
-`v0.2.0`，标签信息引用 CHANGELOG 摘要。`origin` 指向 Gitee，未来 GitHub 镜像
-使用名为 `github` 的远程。
+`v0.2.0`，标签信息引用 CHANGELOG 摘要。`origin` 指向 Gitee，`github` 指向 GitHub
+只读镜像；发布完成后由 Gitee 镜像任务同步标签。

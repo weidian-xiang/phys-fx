@@ -8,10 +8,19 @@
 
 name: PhysFX CI
 
+# GitHub 仅作为 Gitee 镜像后的质量验证平台。本工作流不执行推送、镜像或发布。
+
 on:
   push:
     branches: [master]
   pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physfx-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
