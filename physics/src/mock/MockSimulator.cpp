@@ -18,7 +18,7 @@ core::Status MockSimulator::initialize(const SimConfig& config) {
 }
 
 core::Result<core::SimulationResult> MockSimulator::simulate(const core::Frame&,
-                                                              const core::SceneContext&) {
+                                                             const core::SceneContext&) {
   core::SimulationResult result{};
   result.stepCount = static_cast<std::size_t>(config_.substeps);
   return result;

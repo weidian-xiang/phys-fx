@@ -26,7 +26,8 @@ namespace physfx::platform {
 class IVideoReader {
  public:
   virtual ~IVideoReader() = default;
-  /** @brief 打开视频。 @param path 输入路径。 @return 平台状态码。 @todo Phase2 实现：FFmpeg 解码。 */
+  /** @brief 打开视频。 @param path 输入路径。 @return 平台状态码。 @todo Phase2 实现：FFmpeg 解码。
+   */
   virtual PlatformStatus open(const std::filesystem::path& path) = 0;
   /** @brief 读取一帧。 @param frame 输出帧。 @return 平台状态码。 @todo Phase2 实现：像素转换。 */
   virtual PlatformStatus read(core::Frame& frame) = 0;

@@ -1,0 +1,10 @@
+{
+  "_copyright": "Copyright (c) 2026 向伟典; SPDX-License-Identifier: Apache-2.0",
+  "name": "火花",
+  "type": "effect_template",
+  "simulator": "simple_particles",
+  "preset": "sparks",
+  "blend": "additive",
+  "emission_rate": 120,
+  "max_particles": 10000
+}

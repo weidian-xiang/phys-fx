@@ -5,3 +5,8 @@ Copyright (c) 2026 向伟典
 本项目及其文档、示例和源代码按照 Apache License 2.0 发布，许可证全文见 LICENSE。
 项目名称“PhysFX”及其 Logo、品牌视觉和相关商标归向伟典所有，不因 Apache-2.0 授权而转让。
 项目仓库地址：https://gitee.com/xiang-weidian/phys-fx
+
+第三方组件声明：
+- FFmpeg：仅允许使用未启用 GPL 组件的 LGPL-2.1-or-later 动态构建；源码获取见 https://ffmpeg.org/。
+- ONNX Runtime：MIT 许可，版权归 Microsoft 及其贡献者；源码获取见 https://github.com/microsoft/onnxruntime。
+- 模型权重不随本仓库分发，许可和哈希必须按 docs/model-cards.md 单独审查。

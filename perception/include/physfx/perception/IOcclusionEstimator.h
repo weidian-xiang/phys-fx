@@ -32,8 +32,7 @@ class IOcclusionEstimator {
    * @return 遮挡掩码。
    * @todo Phase2 实现：接入实例分割与深度排序模型。
    */
-  virtual core::OcclusionMask estimate(const core::Frame& frame,
-                                       const core::DepthMap& depth) = 0;
+  virtual core::OcclusionMask estimate(const core::Frame& frame, const core::DepthMap& depth) = 0;
 };
 
 }  // namespace physfx::perception

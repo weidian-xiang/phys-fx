@@ -23,4 +23,7 @@ __pycache__/
 # 第三方实体验证包（仅允许 vcpkg manifest 入库）
 third_party/cache/
 third_party/packages/
+third_party/ffmpeg/
+third_party/onnxruntime/
+models/
 *.egg-info/

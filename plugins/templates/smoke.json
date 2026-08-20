@@ -1,0 +1,10 @@
+{
+  "_copyright": "Copyright (c) 2026 向伟典; SPDX-License-Identifier: Apache-2.0",
+  "name": "烟尘",
+  "type": "effect_template",
+  "simulator": "simple_particles",
+  "preset": "smoke",
+  "blend": "alpha",
+  "emission_rate": 80,
+  "max_particles": 10000
+}

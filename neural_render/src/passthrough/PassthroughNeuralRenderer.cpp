@@ -16,8 +16,9 @@ std::string_view PassthroughNeuralRenderer::name() const noexcept {
   return "neural_render_passthrough";
 }
 
-core::Result<core::Frame> PassthroughNeuralRenderer::render(
-    const core::Frame& frame, const core::SceneContext&, const core::SimulationResult&) {
+core::Result<core::Frame> PassthroughNeuralRenderer::render(const core::Frame& frame,
+                                                            const core::SceneContext&,
+                                                            const core::SimulationResult&) {
   return frame;
 }
 

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <string>
 
@@ -33,6 +34,15 @@ struct Config {
   bool physicsEnabled{true};
   bool renderEnabled{true};
   RenderPathKind renderPath{RenderPathKind::kCompositing};
+  std::string semanticsBackend{"stub"};
+  std::string segmenterModelPath{};
+  std::string trackerModelPath{};
+  std::uint32_t promptX{0};
+  std::uint32_t promptY{0};
+  std::string physicsBackend{"mock"};
+  std::string compositorBackend{"passthrough"};
+  std::string particlePreset{"sparks"};
+  std::uint64_t boundEntityId{0};
 
   /** @brief 从文件读取配置骨架。 @param path 配置文件路径。 @return 配置对象。 */
   [[nodiscard]] static Config fromFile(const std::filesystem::path& path);

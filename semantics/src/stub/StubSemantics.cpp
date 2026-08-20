@@ -10,13 +10,24 @@
 
 #include "physfx/semantics/StubSemantics.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+
 namespace physfx::semantics {
 
 core::Result<std::vector<core::Entity>> StubSegmenter::segment(const core::Frame& frame) {
   core::Entity entity{};
   entity.id = 1;
   entity.category = "stub_entity";
-  entity.maskTimeline.push_back({frame.index, frame.width, frame.height, {}});
+  core::EntityMask mask{frame.index, frame.width, frame.height, {}};
+  mask.values.assign(static_cast<std::size_t>(frame.width) * frame.height, 0);
+  for (std::uint32_t y = frame.height / 3; y < frame.height * 2 / 3; ++y) {
+    for (std::uint32_t x = frame.width / 3; x < frame.width * 2 / 3; ++x) {
+      mask.values[static_cast<std::size_t>(y) * frame.width + x] = 255;
+    }
+  }
+  entity.maskTimeline.push_back(std::move(mask));
   return std::vector<core::Entity>{std::move(entity)};
 }
 
@@ -24,7 +35,26 @@ core::Result<std::vector<core::Entity>> StubTracker::track(
     const core::Frame& frame, const std::vector<core::Entity>& entities) {
   auto tracked = entities;
   for (auto& entity : tracked) {
-    entity.trajectory.push_back({frame.index, {}});
+    core::Vec3 center{};
+    std::size_t count = 0;
+    if (!entity.maskTimeline.empty()) {
+      const auto& mask = entity.maskTimeline.back();
+      for (std::uint32_t y = 0; y < mask.height; ++y) {
+        for (std::uint32_t x = 0; x < mask.width; ++x) {
+          const std::size_t offset = static_cast<std::size_t>(y) * mask.width + x;
+          if (offset < mask.values.size() && mask.values[offset] != 0) {
+            center.x += static_cast<float>(x);
+            center.y += static_cast<float>(y);
+            ++count;
+          }
+        }
+      }
+    }
+    if (count > 0) {
+      center.x /= static_cast<float>(count);
+      center.y /= static_cast<float>(count);
+    }
+    entity.trajectory.push_back({frame.index, center});
   }
   return tracked;
 }

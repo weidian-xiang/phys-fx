@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "../examples/empty_effect/EmptyEffectPlugin.h"
+#include "physfx/plugins/BuiltInEffectTemplates.h"
 #include "physfx/plugins/PluginRegistry.h"
 
 int main() {
@@ -20,5 +21,11 @@ int main() {
   assert(registry.registerPlugin(plugin));
   assert(registry.find("empty_effect") != nullptr);
   assert(registry.findByType(physfx::plugins::PluginType::kEffectTemplate).size() == 1);
+  assert(physfx::plugins::registerBuiltInEffectTemplates(registry));
+  assert(registry.findByType(physfx::plugins::PluginType::kEffectTemplate).size() == 3);
+  const auto sparks =
+      std::dynamic_pointer_cast<physfx::plugins::BuiltInEffectTemplate>(registry.find("sparks"));
+  assert(sparks && sparks->displayName() == "火花");
+  assert(sparks->parameters().emissionRate == 120.0F);
   return 0;
 }
