@@ -12,9 +12,7 @@
 
 namespace physfx::platform {
 
-PlatformStatus StubVideoWriter::open(const std::filesystem::path&,
-                                     std::uint32_t,
-                                     std::uint32_t) {
+PlatformStatus StubVideoWriter::open(const std::filesystem::path&, std::uint32_t, std::uint32_t) {
   open_ = false;
   return core::Status::notImplemented("FFmpeg 视频写入尚未实现");
 }

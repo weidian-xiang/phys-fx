@@ -25,7 +25,7 @@ core::CameraPose StubCameraTracker::track(const core::Frame& frame) {
 core::Plane StubGroundPlaneDetector::detect(const core::DepthMap&) { return {}; }
 
 core::OcclusionMask StubOcclusionEstimator::estimate(const core::Frame& frame,
-                                                      const core::DepthMap&) {
+                                                     const core::DepthMap&) {
   return {.width = frame.width, .height = frame.height, .values = {}};
 }
 

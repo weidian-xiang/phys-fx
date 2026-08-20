@@ -16,16 +16,14 @@
 
 namespace {
 
-bool containsForbiddenInclude(const std::filesystem::path& file,
-                              const std::string& ownModule) {
+bool containsForbiddenInclude(const std::filesystem::path& file, const std::string& ownModule) {
   std::ifstream stream(file);
   const std::string text((std::istreambuf_iterator<char>(stream)),
                          std::istreambuf_iterator<char>());
-  const std::vector<std::string> peerModules = {
-      "perception", "semantics", "editing", "physics", "compositing", "neural_render"};
+  const std::vector<std::string> peerModules = {"perception", "semantics",   "editing",
+                                                "physics",    "compositing", "neural_render"};
   for (const auto& module : peerModules) {
-    if (module != ownModule &&
-        text.find("physfx/" + module + "/") != std::string::npos) {
+    if (module != ownModule && text.find("physfx/" + module + "/") != std::string::npos) {
       return true;
     }
   }
@@ -36,8 +34,8 @@ bool containsForbiddenInclude(const std::filesystem::path& file,
 
 int main() {
   const std::filesystem::path sourceRoot{PHYSFX_SOURCE_DIR};
-  const std::vector<std::string> modules = {
-      "perception", "semantics", "editing", "physics", "compositing", "neural_render"};
+  const std::vector<std::string> modules = {"perception", "semantics",   "editing",
+                                            "physics",    "compositing", "neural_render"};
   for (const auto& module : modules) {
     const auto includeRoot = sourceRoot / module / "include";
     for (const auto& entry : std::filesystem::recursive_directory_iterator(includeRoot)) {

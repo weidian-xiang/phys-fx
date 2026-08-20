@@ -45,8 +45,7 @@ class StubGroundPlaneDetector final : public IGroundPlaneDetector {
 /** @brief Phase 1 遮挡估计桩。 @todo Phase2 替换为真实估计器。 */
 class StubOcclusionEstimator final : public IOcclusionEstimator {
  public:
-  core::OcclusionMask estimate(const core::Frame& frame,
-                               const core::DepthMap& depth) override;
+  core::OcclusionMask estimate(const core::Frame& frame, const core::DepthMap& depth) override;
 };
 
 }  // namespace physfx::perception

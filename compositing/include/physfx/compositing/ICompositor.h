@@ -35,8 +35,7 @@ class ICompositor {
    * @return 合成后的帧。
    * @todo Phase2 实现：接入 OpenGL/Vulkan 渲染、遮挡、阴影和色彩匹配。
    */
-  virtual core::Frame compose(const core::Frame& frame,
-                              const core::SceneContext& scene,
+  virtual core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                               const core::SimulationResult& simulation) = 0;
 };
 

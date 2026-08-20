@@ -19,9 +19,10 @@ int main() {
   physfx::core::SemanticScene scene;
   physfx::editing::EditCommandStack stack;
   assert(stack.execute(std::make_unique<physfx::editing::commands::EmptyCommand>(), scene).ok());
-  assert(stack.execute(std::make_unique<physfx::editing::commands::SetWeather>(
-                           physfx::core::Weather::kRain),
-                       scene)
+  assert(stack
+             .execute(std::make_unique<physfx::editing::commands::SetWeather>(
+                          physfx::core::Weather::kRain),
+                      scene)
              .ok());
   assert(scene.weather == physfx::core::Weather::kRain);
   assert(stack.undo(scene).ok());

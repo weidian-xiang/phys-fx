@@ -1,5 +1,8 @@
 # 第三方依赖说明
 
-第三方依赖统一通过 vcpkg manifest (`vcpkg.json`) 管理。本阶段不下载或集成 FFmpeg、OpenCV、Taichi、
-OpenGL/Vulkan 等重型依赖；pybind11 仅用于可选 Python 骨架验证。`third_party` 目录只作为应急补丁位置，
-其中的缓存与实体验证包不得入库。
+Phase 3 的实体依赖由 `tools/setup_deps.py` 按 `versions.md` 的锁定版本、平台和哈希
+下载。FFmpeg 只接受 BtbN 的 LGPL shared 包，ONNX Runtime 使用 Microsoft 官方 NuGet
+包；下载缓存和解包目录均被 Git 忽略，不得入库。
+
+默认构建仍为零依赖。OpenCV、Taichi、OpenGL/Vulkan 等尚未引入；新增或升级依赖必须
+先完成许可证审查、版本锁定、哈希校验和 NOTICE 更新。

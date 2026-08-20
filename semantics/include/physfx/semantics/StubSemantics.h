@@ -25,8 +25,8 @@ class StubSegmenter final : public ISegmenter {
 /** @brief 原样返回实体的跟踪桩。 */
 class StubTracker final : public ITracker {
  public:
-  core::Result<std::vector<core::Entity>> track(
-      const core::Frame& frame, const std::vector<core::Entity>& entities) override;
+  core::Result<std::vector<core::Entity>> track(const core::Frame& frame,
+                                                const std::vector<core::Entity>& entities) override;
 };
 
 /** @brief 写入占位属性的实体属性估计桩。 */

@@ -35,8 +35,7 @@ class IRenderPath {
    * @param simulation 模拟结果。
    * @return 渲染后的帧或错误状态。
    */
-  virtual Result<Frame> render(const Frame& frame,
-                               const SceneContext& scene,
+  virtual Result<Frame> render(const Frame& frame, const SceneContext& scene,
                                const SimulationResult& simulation) = 0;
 };
 

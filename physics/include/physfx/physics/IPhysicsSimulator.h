@@ -51,8 +51,8 @@ class IPhysicsSimulator {
 class MockSimulator final : public IPhysicsSimulator {
  public:
   core::Status initialize(const SimConfig& config) override;
-  core::Result<core::SimulationResult> simulate(
-      const core::Frame& frame, const core::SceneContext& scene) override;
+  core::Result<core::SimulationResult> simulate(const core::Frame& frame,
+                                                const core::SceneContext& scene) override;
 
  private:
   SimConfig config_{};

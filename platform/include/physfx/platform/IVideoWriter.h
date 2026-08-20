@@ -34,9 +34,8 @@ class IVideoWriter {
    * @return 平台状态码。
    * @todo Phase2 实现：FFmpeg 编码器初始化。
    */
-  virtual PlatformStatus open(const std::filesystem::path& path,
-                               std::uint32_t width,
-                               std::uint32_t height) = 0;
+  virtual PlatformStatus open(const std::filesystem::path& path, std::uint32_t width,
+                              std::uint32_t height) = 0;
   /** @brief 写入一帧。 @param frame 输入帧。 @return 平台状态码。 @todo Phase2 实现：视频编码。 */
   virtual PlatformStatus write(const core::Frame& frame) = 0;
   /** @brief 关闭视频。 @return 无。 @todo Phase2 实现：刷新并释放编码资源。 */
@@ -48,8 +47,7 @@ class IVideoWriter {
 /** @brief Phase 1 视频写入桩。 @todo Phase2 替换为 FFmpeg 实现。 */
 class StubVideoWriter final : public IVideoWriter {
  public:
-  PlatformStatus open(const std::filesystem::path& path,
-                      std::uint32_t width,
+  PlatformStatus open(const std::filesystem::path& path, std::uint32_t width,
                       std::uint32_t height) override;
   PlatformStatus write(const core::Frame& frame) override;
   void close() noexcept override;

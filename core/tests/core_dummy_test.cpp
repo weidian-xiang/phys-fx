@@ -12,8 +12,8 @@
 #include <filesystem>
 #include <fstream>
 
-#include "physfx/core/SceneGraph.h"
 #include "physfx/core/Config.h"
+#include "physfx/core/SceneGraph.h"
 
 int main() {
   physfx::core::SceneGraph graph;
@@ -23,11 +23,14 @@ int main() {
   const auto configPath = std::filesystem::temp_directory_path() / "physfx_phase2_config.json";
   {
     std::ofstream stream(configPath);
-    stream << R"({"frame_count": 3, "stages": {"semantics": {"enabled": false}, "render": {"path": "neural"}}})";
+    stream
+        << R"({"frame_count":3,"stages":{"semantics":{"enabled":false,"implementation":"traditional","prompt":{"point":[12,34]}},"render":{"path":"neural"}}})";
   }
   const auto config = physfx::core::Config::fromFile(configPath);
   assert(config.frameCount == 3);
   assert(!config.semanticsEnabled);
+  assert(config.semanticsBackend == "traditional");
+  assert(config.promptX == 12 && config.promptY == 34);
   assert(config.renderPath == physfx::core::RenderPathKind::kNeural);
   std::filesystem::remove(configPath);
   return 0;

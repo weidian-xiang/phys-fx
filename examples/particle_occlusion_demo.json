@@ -1,0 +1,27 @@
+{
+  "_copyright": "Copyright (c) 2026 向伟典; SPDX-License-Identifier: Apache-2.0",
+  "input": "build/demo-input.mp4",
+  "output": "build/particle-occlusion-demo.mp4",
+  "frame_count": 0,
+  "perception": {"enabled": true, "implementation": "stub"},
+  "semantics": {
+    "enabled": true,
+    "implementation": "traditional",
+    "segmenter_model": "models/sam.onnx",
+    "tracker_model": "models/xmem.onnx",
+    "prompt": {"point": [160, 120]}
+  },
+  "editing": {"enabled": true, "commands": []},
+  "physics": {
+    "enabled": true,
+    "implementation": "simple_particles",
+    "preset": "sparks",
+    "bound_entity_id": 1
+  },
+  "render": {
+    "enabled": true,
+    "path": "compositing",
+    "implementation": "sprite",
+    "occlusion": true
+  }
+}
