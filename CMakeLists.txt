@@ -8,12 +8,13 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-project(PhysFX VERSION 0.2.0 LANGUAGES CXX)
+project(PhysFX VERSION 0.3.0 LANGUAGES CXX)
 
 option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
 option(PHYSFX_WITH_FFMPEG "启用 FFmpeg 动态视频 IO（需要 LGPL 开发包）" OFF)
 option(PHYSFX_WITH_ONNX "启用 ONNX Runtime 推理后端" OFF)
+option(PHYSFX_WITH_TAICHI "启用 Taichi 进程级流体桥接" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -83,6 +84,7 @@ endif()
 add_library(physfx_editing STATIC
   editing/src/Commands.cpp
   editing/src/EditCommandStack.cpp
+  editing/src/CommandFactory.cpp
 )
 target_include_directories(physfx_editing PUBLIC editing/include)
 target_link_libraries(physfx_editing PUBLIC physfx_core)
@@ -90,6 +92,7 @@ target_link_libraries(physfx_editing PUBLIC physfx_core)
 add_library(physfx_physics STATIC
   physics/src/mock/MockSimulator.cpp
   physics/src/particles/SimpleParticleSystem.cpp
+  physics/src/taichi_bridge/TaichiFluidSimulator.cpp
 )
 target_include_directories(physfx_physics PUBLIC physics/include)
 target_link_libraries(physfx_physics PUBLIC physfx_core)
@@ -97,12 +100,14 @@ target_link_libraries(physfx_physics PUBLIC physfx_core)
 add_library(physfx_compositing STATIC
   compositing/src/PassthroughCompositor.cpp
   compositing/src/sprite/SpriteCompositor.cpp
+  compositing/src/layered/LayeredCompositor.cpp
 )
 target_include_directories(physfx_compositing PUBLIC compositing/include)
 target_link_libraries(physfx_compositing PUBLIC physfx_core)
 
 add_library(physfx_neural_render STATIC
   neural_render/src/passthrough/PassthroughNeuralRenderer.cpp
+  neural_render/src/inpainting/InpaintingRenderer.cpp
 )
 target_include_directories(physfx_neural_render PUBLIC neural_render/include)
 target_link_libraries(physfx_neural_render PUBLIC physfx_core)
@@ -110,6 +115,7 @@ target_link_libraries(physfx_neural_render PUBLIC physfx_core)
 add_library(physfx_plugins STATIC
   plugins/src/PluginRegistry.cpp
   plugins/src/BuiltInEffectTemplates.cpp
+  plugins/src/BuiltInEditTemplates.cpp
   plugins/examples/empty_effect/EmptyEffectPlugin.cpp
 )
 target_include_directories(physfx_plugins PUBLIC plugins/include)
@@ -313,7 +319,7 @@ if(PHYSFX_BUILD_TESTS)
   add_test(NAME particle_occlusion_chain_test COMMAND physfx_particle_occlusion_chain_tests)
 
   add_test(NAME cli_version_test COMMAND physfx --version)
-  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.2.0-dev")
+  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.3.0-dev")
   add_test(NAME cli_empty_pipeline_test
            COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/empty_pipeline.json")
   set_tests_properties(cli_empty_pipeline_test PROPERTIES
@@ -321,6 +327,10 @@ if(PHYSFX_BUILD_TESTS)
   add_test(NAME cli_semantic_pipeline_test
            COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/semantic_edit_pipeline.json")
   set_tests_properties(cli_semantic_pipeline_test PROPERTIES
+    PASS_REGULAR_EXPRESSION "stage=perception.*stage=semantics.*stage=editing.*stage=physics.*stage=render")
+  add_test(NAME cli_edit_script_test
+           COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/edit_script_pipeline.json")
+  set_tests_properties(cli_edit_script_test PROPERTIES
     PASS_REGULAR_EXPRESSION "stage=perception.*stage=semantics.*stage=editing.*stage=physics.*stage=render")
 
   find_package(Python 3.11 COMPONENTS Interpreter QUIET)

@@ -12,7 +12,10 @@
 
 #include <string>
 #include <string_view>
+#include <cstdint>
+#include <vector>
 
+#include "physfx/core/SceneContext.h"
 #include "physfx/core/SemanticScene.h"
 #include "physfx/core/Status.h"
 
@@ -24,12 +27,28 @@ class IEditCommand {
   virtual ~IEditCommand() = default;
   /** @brief 返回命令名称。 @return 稳定名称。 */
   [[nodiscard]] virtual std::string_view name() const noexcept = 0;
+  /** @brief 在完整场景上下文上执行命令。默认转发到语义场景兼容入口。 */
+  virtual core::Status execute(core::SceneContext& context) {
+    if (!context.semanticScene) {
+      return {core::StatusCode::kInvalidArgument, "编辑命令缺少语义场景"};
+    }
+    return execute(*context.semanticScene);
+  }
+  /** @brief 在完整场景上下文上撤销命令。默认转发到语义场景兼容入口。 */
+  virtual core::Status undo(core::SceneContext& context) {
+    if (!context.semanticScene) {
+      return {core::StatusCode::kInvalidArgument, "编辑命令缺少语义场景"};
+    }
+    return undo(*context.semanticScene);
+  }
   /** @brief 执行命令。 @param scene 语义场景。 @return 操作状态。 */
   virtual core::Status execute(core::SemanticScene& scene) = 0;
   /** @brief 撤销命令。 @param scene 语义场景。 @return 操作状态。 */
   virtual core::Status undo(core::SemanticScene& scene) = 0;
   /** @brief 序列化命令描述。 @return 稳定文本表示。 */
   [[nodiscard]] virtual std::string serialize() const = 0;
+  /** @brief 返回命令影响的实体编号。 @return 实体编号列表。 */
+  [[nodiscard]] virtual std::vector<std::uint64_t> affectedEntityIds() const { return {}; }
 };
 
 }  // namespace physfx::editing

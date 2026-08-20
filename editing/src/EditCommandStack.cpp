@@ -27,6 +27,17 @@ core::Status EditCommandStack::execute(std::unique_ptr<IEditCommand> command,
   return status;
 }
 
+core::Status EditCommandStack::execute(std::unique_ptr<IEditCommand> command,
+                                       core::SceneContext& context) {
+  if (!command) return {core::StatusCode::kInvalidArgument, "编辑命令不能为空"};
+  auto status = command->execute(context);
+  if (status.ok()) {
+    undoStack_.push_back(std::move(command));
+    redoStack_.clear();
+  }
+  return status;
+}
+
 core::Status EditCommandStack::undo(core::SemanticScene& scene) {
   if (undoStack_.empty()) {
     return {core::StatusCode::kNotFound, "没有可撤销的命令"};
@@ -40,6 +51,15 @@ core::Status EditCommandStack::undo(core::SemanticScene& scene) {
   return status;
 }
 
+core::Status EditCommandStack::undo(core::SceneContext& context) {
+  if (undoStack_.empty()) return {core::StatusCode::kNotFound, "没有可撤销的命令"};
+  auto command = std::move(undoStack_.back());
+  undoStack_.pop_back();
+  auto status = command->undo(context);
+  if (status.ok()) redoStack_.push_back(std::move(command));
+  return status;
+}
+
 core::Status EditCommandStack::redo(core::SemanticScene& scene) {
   if (redoStack_.empty()) {
     return {core::StatusCode::kNotFound, "没有可重做的命令"};
@@ -50,6 +70,15 @@ core::Status EditCommandStack::redo(core::SemanticScene& scene) {
   if (status.ok()) {
     undoStack_.push_back(std::move(command));
   }
+  return status;
+}
+
+core::Status EditCommandStack::redo(core::SceneContext& context) {
+  if (redoStack_.empty()) return {core::StatusCode::kNotFound, "没有可重做的命令"};
+  auto command = std::move(redoStack_.back());
+  redoStack_.pop_back();
+  auto status = command->execute(context);
+  if (status.ok()) undoStack_.push_back(std::move(command));
   return status;
 }
 

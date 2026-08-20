@@ -115,7 +115,8 @@ std::uint32_t readPointCoordinate(const std::string& text, std::size_t coordinat
 
 Config Config::fromFile(const std::filesystem::path& path) {
   Config config{};
-  std::ifstream stream(path);
+  const auto configPath = std::filesystem::absolute(path).lexically_normal();
+  std::ifstream stream(configPath);
   if (!stream) {
     return config;
   }
@@ -148,6 +149,21 @@ Config Config::fromFile(const std::filesystem::path& path) {
   config.particlePreset = readStringInBlock(text, "physics", "preset", config.particlePreset);
   config.boundEntityId = static_cast<std::uint64_t>(
       readSizeInBlock(text, "physics", "bound_entity_id", config.boundEntityId));
+  config.editScriptPath = readString(text, "edit_script");
+  if (!config.editScriptPath.empty()) {
+    const std::filesystem::path scriptPath(config.editScriptPath);
+    if (scriptPath.is_relative()) {
+      // 编辑脚本的相对路径始终相对于配置文件，避免 CTest/CLI 工作目录差异。
+      config.editScriptPath =
+          (configPath.parent_path() / scriptPath).lexically_normal().string();
+    } else {
+      config.editScriptPath = scriptPath.lexically_normal().string();
+    }
+  }
+  config.editOperation = readString(text, "operation");
+  config.appearanceName = readString(text, "material");
+  config.editTarget.x = static_cast<float>(readSizeInBlock(text, "editing", "target_x", 0));
+  config.editTarget.y = static_cast<float>(readSizeInBlock(text, "editing", "target_y", 0));
   return config;
 }
 

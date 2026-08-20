@@ -19,6 +19,9 @@
 #include "physfx/core/Log.h"
 #include "physfx/core/SemanticScene.h"
 #include "physfx/editing/commands/EmptyCommand.h"
+#include "physfx/editing/CommandFactory.h"
+
+#include <fstream>
 
 namespace physfx::pipeline {
 
@@ -33,6 +36,29 @@ void logStage(std::string_view stage, const Clock::time_point startedAt, std::st
   message << "stage=" << stage << " status=" << status
           << " elapsed_ms=" << static_cast<double>(elapsed.count()) / 1000.0;
   core::Logger::info(message.str());
+}
+
+std::vector<std::string> readScriptCommands(const std::string& path) {
+  std::ifstream stream(path);
+  if (!stream) return {};
+  const std::string text((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+  if (text.find("\"version\": 1") == std::string::npos &&
+      text.find("\"version\":1") == std::string::npos) {
+    return {};
+  }
+  std::vector<std::string> commands;
+  std::size_t cursor = 0;
+  while ((cursor = text.find('{', cursor)) != std::string::npos) {
+    const auto end = text.find('}', cursor);
+    if (end == std::string::npos) break;
+    const auto object = text.substr(cursor, end - cursor + 1U);
+    if (object.find("\"type\"") != std::string::npos) commands.push_back(object);
+    cursor = end + 1U;
+  }
+  if (commands.empty() && text.find("\"commands\"") != std::string::npos) {
+    commands.push_back(R"({"type":"empty"})");
+  }
+  return commands;
 }
 
 }  // namespace
@@ -130,13 +156,53 @@ bool Pipeline::run(const core::Config& config) {
 
     startedAt = Clock::now();
     if (config.editingEnabled) {
-      if (!dependencies_.editCommandStack ||
-          !dependencies_.editCommandStack
-               ->execute(std::make_unique<editing::commands::EmptyCommand>(),
-                         *context.scene.semanticScene)
-               .ok()) {
-        core::Logger::error("stage=editing status=error reason=command_failed");
+      if (!dependencies_.editCommandStack) {
+        core::Logger::error("stage=editing status=error reason=stack_missing");
         return false;
+      }
+      std::vector<std::string> script;
+      if (!config.editOperation.empty()) {
+        const auto entityId = config.boundEntityId == 0 ? 1 : config.boundEntityId;
+        script.push_back("{\"type\":\"select_entity\",\"entity_id\":" +
+                         std::to_string(entityId) + "}");
+        if (config.editOperation == "remove") {
+          script.push_back("{\"type\":\"delete_entity\",\"entity_id\":" +
+                           std::to_string(entityId) + "}");
+        } else if (config.editOperation == "move" || config.editOperation == "copy" ||
+                   config.editOperation == "appearance") {
+          if (config.editOperation == "move") {
+            script.push_back("{\"type\":\"move_entity\",\"entity_id\":" +
+                             std::to_string(entityId) + ",\"x\":" +
+                             std::to_string(static_cast<std::uint64_t>(config.editTarget.x)) +
+                             ",\"y\":" +
+                             std::to_string(static_cast<std::uint64_t>(config.editTarget.y)) +
+                             "}");
+          } else if (config.editOperation == "copy") {
+            script.push_back("{\"type\":\"copy_entity\",\"entity_id\":" +
+                             std::to_string(entityId) + "}");
+          } else {
+            script.push_back("{\"type\":\"change_material\",\"entity_id\":" +
+                             std::to_string(entityId) + ",\"material\":\"" +
+                             config.appearanceName + "\"}");
+          }
+        }
+      } else {
+        script = config.editScriptPath.empty()
+                     ? std::vector<std::string>{R"({"type":"empty"})"}
+                     : readScriptCommands(config.editScriptPath);
+      }
+      if (script.empty() && !config.editScriptPath.empty()) {
+        core::Logger::error("stage=editing status=error reason=script_invalid");
+        return false;
+      }
+      for (const auto& serialized : script) {
+        auto command = editing::deserializeCommand(serialized);
+        if (!command.ok() || !dependencies_.editCommandStack
+                                  ->execute(std::move(command).value(), context.scene)
+                                  .ok()) {
+          core::Logger::error("stage=editing status=error reason=command_failed");
+          return false;
+        }
       }
       logStage("editing", startedAt, "ok");
     } else {

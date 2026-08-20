@@ -9,13 +9,16 @@
  */
 
 #include <utility>
+#include <algorithm>
 
 #include "physfx/editing/commands/ChangeMaterial.h"
+#include "physfx/editing/commands/CopyEntity.h"
 #include "physfx/editing/commands/DeleteEntity.h"
 #include "physfx/editing/commands/EmptyCommand.h"
 #include "physfx/editing/commands/MoveEntity.h"
 #include "physfx/editing/commands/SetTimeOfDay.h"
 #include "physfx/editing/commands/SetWeather.h"
+#include "physfx/editing/commands/SelectEntity.h"
 
 namespace physfx::editing::commands {
 
@@ -47,7 +50,12 @@ core::Status MoveEntity::undo(core::SemanticScene& scene) {
   entity->trajectory.back().position = *previous_;
   return core::Status::success();
 }
-std::string MoveEntity::serialize() const { return R"({"type":"move_entity"})"; }
+std::string MoveEntity::serialize() const {
+  return "{\"type\":\"move_entity\",\"entity_id\":" + std::to_string(entityId_) +
+         ",\"x\":" + std::to_string(target_.x) + ",\"y\":" +
+         std::to_string(target_.y) + ",\"z\":" + std::to_string(target_.z) + "}";
+}
+std::vector<std::uint64_t> MoveEntity::affectedEntityIds() const { return {entityId_}; }
 
 DeleteEntity::DeleteEntity(std::uint64_t entityId) : entityId_(entityId) {}
 std::string_view DeleteEntity::name() const noexcept { return "delete_entity"; }
@@ -64,7 +72,10 @@ core::Status DeleteEntity::undo(core::SemanticScene& scene) {
   entity->deleted = *previous_;
   return core::Status::success();
 }
-std::string DeleteEntity::serialize() const { return R"({"type":"delete_entity"})"; }
+std::string DeleteEntity::serialize() const {
+  return "{\"type\":\"delete_entity\",\"entity_id\":" + std::to_string(entityId_) + "}";
+}
+std::vector<std::uint64_t> DeleteEntity::affectedEntityIds() const { return {entityId_}; }
 
 ChangeMaterial::ChangeMaterial(std::uint64_t entityId, core::MaterialProperties material)
     : entityId_(entityId), target_(std::move(material)) {}
@@ -82,7 +93,62 @@ core::Status ChangeMaterial::undo(core::SemanticScene& scene) {
   entity->material = *previous_;
   return core::Status::success();
 }
-std::string ChangeMaterial::serialize() const { return R"({"type":"change_material"})"; }
+std::string ChangeMaterial::serialize() const {
+  return "{\"type\":\"change_material\",\"entity_id\":" +
+         std::to_string(entityId_) + ",\"material\":\"" + target_.name + "\"}";
+}
+std::vector<std::uint64_t> ChangeMaterial::affectedEntityIds() const { return {entityId_}; }
+
+SelectEntity::SelectEntity(std::uint64_t entityId) : entityId_(entityId) {}
+std::string_view SelectEntity::name() const noexcept { return "select_entity"; }
+core::Status SelectEntity::execute(core::SemanticScene& scene) {
+  if (!scene.findEntity(entityId_)) return missingEntity();
+  previous_ = scene.selectedEntityId;
+  scene.selectedEntityId = entityId_;
+  return core::Status::success();
+}
+core::Status SelectEntity::undo(core::SemanticScene& scene) {
+  if (!previous_) return {core::StatusCode::kInternalError, "命令尚未执行"};
+  scene.selectedEntityId = *previous_;
+  return core::Status::success();
+}
+std::string SelectEntity::serialize() const {
+  return "{\"type\":\"select_entity\",\"entity_id\":" + std::to_string(entityId_) + "}";
+}
+std::vector<std::uint64_t> SelectEntity::affectedEntityIds() const { return {entityId_}; }
+
+CopyEntity::CopyEntity(std::uint64_t entityId) : entityId_(entityId) {}
+std::string_view CopyEntity::name() const noexcept { return "copy_entity"; }
+core::Status CopyEntity::execute(core::SemanticScene& scene) {
+  const auto* source = scene.findEntity(entityId_);
+  if (!source) return missingEntity();
+  if (!copyId_) {
+    std::uint64_t nextId = 1;
+    for (const auto& entity : scene.entities) nextId = std::max(nextId, entity.id + 1);
+    copyId_ = nextId;
+  }
+  if (scene.findEntity(*copyId_)) return {core::StatusCode::kInternalError, "复制实体编号冲突"};
+  auto copy = *source;
+  copy.id = *copyId_;
+  copy.category += "_copy";
+  scene.entities.push_back(std::move(copy));
+  return core::Status::success();
+}
+core::Status CopyEntity::undo(core::SemanticScene& scene) {
+  if (!copyId_) return {core::StatusCode::kInternalError, "命令尚未执行"};
+  const auto before = scene.entities.size();
+  scene.entities.erase(std::remove_if(scene.entities.begin(), scene.entities.end(),
+                                      [&](const auto& entity) { return entity.id == *copyId_; }),
+                       scene.entities.end());
+  return scene.entities.size() == before ? missingEntity() : core::Status::success();
+}
+std::string CopyEntity::serialize() const {
+  return "{\"type\":\"copy_entity\",\"entity_id\":" + std::to_string(entityId_) + "}";
+}
+std::vector<std::uint64_t> CopyEntity::affectedEntityIds() const {
+  return copyId_ ? std::vector<std::uint64_t>{entityId_, *copyId_}
+                 : std::vector<std::uint64_t>{entityId_};
+}
 
 SetWeather::SetWeather(core::Weather weather) : target_(weather) {}
 std::string_view SetWeather::name() const noexcept { return "set_weather"; }

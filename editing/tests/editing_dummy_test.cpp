@@ -12,7 +12,12 @@
 #include <memory>
 
 #include "physfx/editing/EditCommandStack.h"
+#include "physfx/editing/CommandFactory.h"
+#include "physfx/editing/commands/CopyEntity.h"
+#include "physfx/editing/commands/DeleteEntity.h"
 #include "physfx/editing/commands/EmptyCommand.h"
+#include "physfx/editing/commands/MoveEntity.h"
+#include "physfx/editing/commands/SelectEntity.h"
 #include "physfx/editing/commands/SetWeather.h"
 
 int main() {
@@ -28,5 +33,27 @@ int main() {
   assert(stack.undo(scene).ok());
   assert(scene.weather == physfx::core::Weather::kOriginal);
   assert(stack.redo(scene).ok());
+  scene.entities.push_back({1, "person"});
+  assert(stack.execute(std::make_unique<physfx::editing::commands::SelectEntity>(1), scene).ok());
+  assert(scene.selectedEntityId == 1);
+  assert(stack.execute(std::make_unique<physfx::editing::commands::MoveEntity>(
+                          1, physfx::core::Vec3{10.0F, 20.0F, 0.0F}),
+                      scene)
+             .ok());
+  assert(scene.findEntity(1)->trajectory.back().position.x == 10.0F);
+  assert(stack.undo(scene).ok());
+  assert(stack.redo(scene).ok());
+  auto parsed = physfx::editing::deserializeCommand(
+      R"({"type":"delete_entity","entity_id":1})");
+  assert(parsed.ok());
+  assert(stack.execute(std::move(parsed).value(), scene).ok());
+  assert(scene.findEntity(1)->deleted);
+  assert(stack.undo(scene).ok());
+  auto invalid = physfx::editing::deserializeCommand(R"({"type":"unknown"})");
+  assert(!invalid.ok());
+  assert(stack.execute(std::make_unique<physfx::editing::commands::CopyEntity>(1), scene).ok());
+  assert(scene.entities.size() == 2);
+  assert(stack.undo(scene).ok());
+  assert(scene.entities.size() == 1);
   return 0;
 }

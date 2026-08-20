@@ -26,6 +26,7 @@ class DeleteEntity final : public IEditCommand {
   core::Status execute(core::SemanticScene& scene) override;
   core::Status undo(core::SemanticScene& scene) override;
   [[nodiscard]] std::string serialize() const override;
+  [[nodiscard]] std::vector<std::uint64_t> affectedEntityIds() const override;
 
  private:
   std::uint64_t entityId_{0};

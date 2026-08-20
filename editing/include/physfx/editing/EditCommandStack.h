@@ -23,10 +23,16 @@ class EditCommandStack {
  public:
   /** @brief 执行并记录命令。 @param command 命令所有权。 @param scene 场景。 @return 状态。 */
   core::Status execute(std::unique_ptr<IEditCommand> command, core::SemanticScene& scene);
+  /** @brief 在完整场景上下文上执行命令。 */
+  core::Status execute(std::unique_ptr<IEditCommand> command, core::SceneContext& context);
   /** @brief 撤销最近命令。 @param scene 场景。 @return 状态。 */
   core::Status undo(core::SemanticScene& scene);
+  /** @brief 在完整场景上下文上撤销命令。 */
+  core::Status undo(core::SceneContext& context);
   /** @brief 重做最近撤销命令。 @param scene 场景。 @return 状态。 */
   core::Status redo(core::SemanticScene& scene);
+  /** @brief 在完整场景上下文上重做命令。 */
+  core::Status redo(core::SceneContext& context);
   /** @brief 返回已执行命令数。 @return 命令数。 */
   [[nodiscard]] std::size_t size() const noexcept;
 

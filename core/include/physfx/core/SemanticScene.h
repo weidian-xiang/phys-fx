@@ -61,6 +61,8 @@ enum class TimeOfDay { kOriginal, kDawn, kDay, kDusk, kNight };
 /** @brief 语义场景契约，是理解、编辑、模拟和渲染共享的数据模型。 */
 struct SemanticScene {
   std::vector<Entity> entities{};
+  /** @brief 当前选中的实体编号；0 表示未选中。 */
+  std::uint64_t selectedEntityId{0};
   Weather weather{Weather::kOriginal};
   TimeOfDay timeOfDay{TimeOfDay::kOriginal};
 

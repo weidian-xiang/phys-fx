@@ -17,11 +17,10 @@
 
 namespace physfx::editing::commands {
 
-/** @brief 更换实体材质的命令骨架。 */
-class ChangeMaterial final : public IEditCommand {
+/** @brief 选择语义实体，供后续编辑命令和模板使用。 */
+class SelectEntity final : public IEditCommand {
  public:
-  /** @brief 创建换材质命令。 @param entityId 实体编号。 @param material 目标材质。 */
-  ChangeMaterial(std::uint64_t entityId, core::MaterialProperties material);
+  explicit SelectEntity(std::uint64_t entityId);
   [[nodiscard]] std::string_view name() const noexcept override;
   core::Status execute(core::SemanticScene& scene) override;
   core::Status undo(core::SemanticScene& scene) override;
@@ -30,8 +29,7 @@ class ChangeMaterial final : public IEditCommand {
 
  private:
   std::uint64_t entityId_{0};
-  core::MaterialProperties target_{};
-  std::optional<core::MaterialProperties> previous_{};
+  std::optional<std::uint64_t> previous_{};
 };
 
 }  // namespace physfx::editing::commands

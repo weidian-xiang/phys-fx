@@ -33,5 +33,16 @@ int main() {
   assert(config.promptX == 12 && config.promptY == 34);
   assert(config.renderPath == physfx::core::RenderPathKind::kNeural);
   std::filesystem::remove(configPath);
+
+  const auto scriptConfigPath = std::filesystem::temp_directory_path() / "physfx_script_config.json";
+  {
+    std::ofstream stream(scriptConfigPath);
+    stream << R"({"edit_script":"scripts/remove.json"})";
+  }
+  const auto scriptConfig = physfx::core::Config::fromFile(scriptConfigPath);
+  const auto expectedScript =
+      (scriptConfigPath.parent_path() / "scripts/remove.json").lexically_normal();
+  assert(std::filesystem::path(scriptConfig.editScriptPath) == expectedScript);
+  std::filesystem::remove(scriptConfigPath);
   return 0;
 }

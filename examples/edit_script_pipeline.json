@@ -1,0 +1,14 @@
+{
+  "schema_version": 3,
+  "frame_count": 1,
+  "input": "",
+  "output": "",
+  "edit_script": "edit_scripts/remove.json",
+  "stages": {
+    "perception": {"enabled": true},
+    "semantics": {"enabled": true},
+    "editing": {"enabled": true},
+    "physics": {"enabled": false},
+    "render": {"enabled": true, "path": "neural"}
+  }
+}

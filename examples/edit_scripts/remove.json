@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "commands": [
+    {"type": "select_entity", "entity_id": 1},
+    {"type": "delete_entity", "entity_id": 1}
+  ]
+}

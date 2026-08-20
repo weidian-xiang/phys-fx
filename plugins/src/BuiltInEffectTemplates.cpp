@@ -22,7 +22,7 @@ BuiltInEffectTemplate::BuiltInEffectTemplate(std::string id, std::string display
       parameters_(std::move(parameters)) {}
 
 PluginMetadata BuiltInEffectTemplate::metadata() const {
-  return {id_, "0.2.0", PluginType::kEffectTemplate};
+  return {id_, "0.3.0", PluginType::kEffectTemplate};
 }
 
 bool BuiltInEffectTemplate::onLoad() { return true; }

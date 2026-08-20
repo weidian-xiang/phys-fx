@@ -43,6 +43,10 @@ struct Config {
   std::string compositorBackend{"passthrough"};
   std::string particlePreset{"sparks"};
   std::uint64_t boundEntityId{0};
+  std::string editScriptPath{};
+  std::string editOperation{};
+  Vec3 editTarget{};
+  std::string appearanceName{"edited"};
 
   /** @brief 从文件读取配置骨架。 @param path 配置文件路径。 @return 配置对象。 */
   [[nodiscard]] static Config fromFile(const std::filesystem::path& path);

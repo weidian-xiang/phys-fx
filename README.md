@@ -3,7 +3,7 @@
 PhysFX Engine 是面向短视频创作者和独立开发者的开源视频世界编辑器：把 AI 场景理解、语义编辑、物理特效和未来神经渲染统一到一条易扩展的管线中。
 核心引擎采用 Apache-2.0，复杂能力通过插件和模板封装，普通用户面对极简操作，开发者保留完整接口栈。
 
-## Phase 3 快速开始
+## Phase 4 快速开始
 
 环境要求：CMake 3.26+、C++20 编译器、Python 3.11+。Windows MinGW 可直接运行：
 
@@ -27,9 +27,21 @@ python -m pytest bindings/python/tests
 
 ## 五阶段管线与粒子演示
 
-`perception → semantics → editing → physics → render`。默认配置会使用所有桩实现，输出带阶段名、状态和耗时的日志；`semantic_edit_pipeline.json` 展示神经渲染直通路径。
+`perception → semantics → editing → physics → render`。默认配置会使用所有桩实现，输出带阶段名、状态和耗时的日志；`semantic_edit_pipeline.json` 展示神经渲染直通路径，`edit_script_pipeline.json` 展示版本化命令脚本。
 `examples/particle_occlusion_demo.json` 选择 `simple_particles + sprite`，在有 FFmpeg
 动态开发包时逐帧读写视频；没有实体包时会明确回退或报中文状态，不会静默伪造输出。
+
+模板化命令：
+
+```text
+physfx remove input.mp4 --at 320,180 -o clean.mp4
+physfx move input.mp4 --at 320,180 --to 520,300 -o moved.mp4
+physfx appearance input.mp4 --at 320,180 --material red -o recolor.mp4
+physfx smoke input.mp4 --anchor 400,350 -o smoked.mp4
+```
+
+无模型环境使用传统分割与 CPU 修复/粒子基线；`smoke` 命令显式走 Taichi 进程桥，
+需要额外 Python 环境，缺失时会给出中文指引，不会伪装成真实流体，也不会影响默认零依赖构建。
 
 ## 目录与边界
 
@@ -40,6 +52,7 @@ python -m pytest bindings/python/tests
 - `physics/`：物理模拟抽象、MockSimulator 和纯 CPU 火花/烟尘粒子系统。
 - `neural_render/`、`compositing/`：神经重渲染与物理合成的统一渲染出口。
 - `plugins/`、`cloud/`：模板授权、云渲染和市场的商业扩展边界，仅接口预留。
+- `docs/edit-script-format.md`：版本化编辑脚本格式，供 CLI 模板和未来 GUI 共用。
 
 详细架构见 [docs/architecture.md](docs/architecture.md)，开源治理见 [docs/open-source-plan.md](docs/open-source-plan.md)，商业边界见 [docs/business-model.md](docs/business-model.md)。
 仓库协作与 Gitee→GitHub 镜像规范见 [docs/git-workflow.md](docs/git-workflow.md) 和
@@ -48,7 +61,8 @@ python -m pytest bindings/python/tests
 
 ## 当前限制
 
-Phase 3 已通过锁定的 LGPL shared FFmpeg 完成真实视频往返和粒子遮挡 demo。ONNX
-Runtime 可选构建已通过，但 SAM/XMem 类模型输入输出仍待具体模型卡片锁定，真实权重
-不入库；当前 demo 明确使用传统分割降级路径。开源版不阉割已有能力，未来商业服务
-只提供增量模板、云算力和企业支持。
+Phase 4 当前已落地命令执行/撤销/重做、编辑脚本、删除/移动 CPU 基线、三条模板 CLI 和
+Taichi 进程桥接口。SAM/XMem 与 ProPainter/E2FGVI 的真实张量推理仍待模型卡片锁定，
+真实权重不入库；`InpaintingRenderer` 是明确标注的 CPU 基线，不代表神经修复质量。
+Taichi 缺失时返回中文诊断，粒子路径继续可用。开源版不阉割已有能力，未来商业服务只
+提供增量模板、云算力和企业支持。
