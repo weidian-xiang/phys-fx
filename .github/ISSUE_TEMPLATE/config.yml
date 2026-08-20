@@ -1,0 +1,14 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+#
+# 本文件遵循 Apache License 2.0 开源协议，许可证全文见仓库根目录 LICENSE 文件。
+# SPDX-License-Identifier: Apache-2.0
+
+blank_issues_enabled: false
+contact_links:
+  - name: 在 Gitee 主仓提交 Issue
+    url: https://gitee.com/xiang-weidian/phys-fx/issues
+    about: GitHub 是只读镜像，请在 Gitee 提交问题、功能建议和安全之外的讨论。
+  - name: 安全问题报告
+    url: https://gitee.com/xiang-weidian/phys-fx/blob/master/SECURITY.md
+    about: 请按 SECURITY.md 的私密渠道报告安全问题，不要公开披露敏感细节。

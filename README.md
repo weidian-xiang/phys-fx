@@ -42,6 +42,9 @@ python -m pytest bindings/python/tests
 - `plugins/`、`cloud/`：模板授权、云渲染和市场的商业扩展边界，仅接口预留。
 
 详细架构见 [docs/architecture.md](docs/architecture.md)，开源治理见 [docs/open-source-plan.md](docs/open-source-plan.md)，商业边界见 [docs/business-model.md](docs/business-model.md)。
+仓库协作与 Gitee→GitHub 镜像规范见 [docs/git-workflow.md](docs/git-workflow.md) 和
+[docs/mirror-sync.md](docs/mirror-sync.md)。Gitee 是主仓，GitHub
+（https://github.com/weidian-xiang/phys-fx）是只读镜像。
 
 ## 当前限制
 
