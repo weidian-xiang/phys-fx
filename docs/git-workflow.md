@@ -25,23 +25,30 @@ git config core.hooksPath .githooks
 
 ## 分支与合入
 
-`master` 是受保护的发布分支，禁止直接 push、force push 和删除；功能从最新
-`master` 切出 `feature/<scope>-<简述>`，修复使用 `fix/<简述>`，文档使用
-`docs/<简述>`，发布准备使用 `release/v<X.Y.Z>`。一个分支只对应一个 PR。
+`master` 是受保护的发布分支，采用维护者与外部贡献者双轨权限：
 
-PR 必须通过构建、CTest、pytest、版权扫描、提交规范和 DCO 检查，并更新
+- 仓库所有者、主维护者向伟典可以把本人代码直接提交并推送到 `master`，不需要为自己的
+  提交创建 PR 或执行形式化自审；推送前仍须完成与改动风险相匹配的本地测试、版权扫描、
+  提交规范和 DCO 签署。
+- 其他贡献者不得直接推送 `master`。功能从最新 `master` 切出
+  `feature/<scope>-<简述>`，修复使用 `fix/<简述>`，文档使用 `docs/<简述>`，每个分支
+  对应一个 Gitee PR，并完成审查与测试后合入。
+- 任何人都不得 force push 或删除 `master`。
+
+外部贡献 PR 必须通过构建、CTest、pytest、版权扫描、提交规范和 DCO 检查，并更新
 `CHANGELOG.md` 的 `Unreleased` 段。合入使用 `git merge --no-ff`，不 squash，保留
 逐条签署的提交历史；合入后删除远端工作分支。公开分支同步使用 `git merge master`，
-不改写历史。
+不改写历史。维护者也可以主动选择分支和 PR 处理高风险或需要公开讨论的变更，但这不是
+维护者本人提交的强制门槛。
 
 Gitee 生成的合并提交可能使用平台固定的 `Merge pull request ...` 首行且不附 DCO。
 `tools/check_commit_msg.py --range` 会根据父提交数量识别并跳过这类平台合并提交，
 但仍逐条严格校验合并前的普通提交；贡献者提交本身仍必须符合 Conventional Commits
 并包含 DCO。
 
-Gitee 后台保护分支路径：仓库设置 → 分支管理 → 分支保护 → 添加 `master`，限制
-推送和强制推送权限，仅允许 PR 合入。当前单人维护期允许作者自审，但仍须完整勾选
-PR 清单。
+Gitee 后台保护分支路径：仓库设置 → 分支管理 → 分支保护 → 添加 `master`。推送权限
+只授予仓库所有者/主维护者向伟典，其他成员无直推权限；合并权限授予维护者，强制推送和
+删除分支保持禁止。PR 的审查与测试门禁用于外部贡献，不要求维护者为本人代码自建 PR。
 
 ## Gitee 主仓与 GitHub 镜像
 

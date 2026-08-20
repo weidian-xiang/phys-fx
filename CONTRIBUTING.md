@@ -21,4 +21,6 @@ Signed-off-by: 向伟典 <xwd752438081@163.com>
 `git commit -s` 自动添加签署行。
 
 提交前请运行本地构建、CTest、pytest、版权扫描和提交信息校验；每个 PR 必须更新
-`CHANGELOG.md` 的 `Unreleased` 段。master 只接受 PR 合入，不直接推送。
+`CHANGELOG.md` 的 `Unreleased` 段。外部贡献者不得直接推送 `master`，必须通过 Gitee
+PR 接受审查和测试。仓库所有者/主维护者向伟典可将本人代码直接推送到 `master`，无需
+自建 PR，但仍须遵守测试、提交规范和 DCO 要求。

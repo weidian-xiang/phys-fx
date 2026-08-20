@@ -50,7 +50,8 @@ git fetch --prune --tags github
 
 `origin` 必须指向 Gitee；`github` 只用于读取和比对。`DISABLED` push URL 会使误执行
 `git push github` 立即失败，`remote.pushDefault=origin` 则保证未显式指定远程时仍推向
-Gitee。开发分支从最新 Gitee `master` 创建，PR 也只在 Gitee 发起。
+Gitee。外部贡献分支从最新 Gitee `master` 创建，PR 只在 Gitee 发起；仓库所有者/主维护者
+的本人代码可以按 `docs/git-workflow.md` 直接推送 Gitee `master`，再由镜像任务同步。
 
 ## 同步后校验
 
