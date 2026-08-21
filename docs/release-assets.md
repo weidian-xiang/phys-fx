@@ -18,13 +18,14 @@
 | 物料 | 最低内容 | 归属 | 状态 | 完成证据 |
 | --- | --- | --- | --- | --- |
 | Phase 7 产品演示 | GUI provider 提示、快速/全量预览切换、曲线编辑和导出逐帧可复现 | Phase 9 任务③ | pending | 待真实效果稳定后录制；URL + SHA-256 |
-| 人物去物 demo | 5~10 秒 720p 授权实拍，before/after 同屏，中英字幕，≤60 秒 | Phase 9 任务③ | blocked | 等待锁定模型与素材授权；不得使用合成素材替代 |
-| 车辆移动 demo | 5~10 秒 720p 授权实拍，原位修复和新位置合成可见 | Phase 9 任务③ | blocked | 等待锁定模型与车辆素材授权 |
-| 宠物/运动物体特效 demo | 5~10 秒 720p 授权实拍，泼水或烟雾遮挡关系可见 | Phase 9 任务③ | blocked | 等待锁定模型与素材授权 |
+| 人物去物 demo | 5~10 秒 720p AI 生成测试素材，before/after 同屏；不得标为实拍 | Phase 9 任务②/③ | available-for-pipeline | 原始文件本地登记见 `assets/demo-footage/README.md`；待真实素材补齐后才能成为发布证据 |
+| 车辆移动 demo | 5~10 秒 720p AI 生成测试素材，原位修复和新位置合成可见；不得标为实拍 | Phase 9 任务②/③ | available-for-pipeline | 原始文件本地登记见 `assets/demo-footage/README.md`；待真实素材补齐后才能成为发布证据 |
+| 宠物/运动物体特效 demo | 5~10 秒 720p AI 生成测试素材，泼水或烟雾遮挡关系可见；不得标为实拍 | Phase 9 任务②/③ | available-for-pipeline | 原始文件本地登记见 `assets/demo-footage/README.md`；待真实素材补齐后才能成为发布证据 |
 | 中英字幕与封面 | 三支核心 demo 均有中英字幕和封面，不剪辑美化效果 | Phase 9 任务③ | pending | 待三条真实效果通过肉眼验收 |
 | 双平台 Release 资产 | Gitee/GitHub 文件名、字节数、SHA-256 一致 | Phase 9 任务③/④ | pending | 待两个平台的可访问下载链接 |
 | 传播平台链接 | 至少 B 站或 YouTube 可访问链接，并与 Release 资产对应 | Phase 9 任务③ | pending | 待真实上传 URL |
 
-每支视频上传前必须从候选构建重新复现并登记文件名、字节数、SHA-256、授权原始素材留档
-说明、处理命令、构建提交、媒体参数和校验值。源码 zip/tar.gz、CI artifact 名称或本地
-文件存在都不等于演示物料已上传。私人视频的本地存在不构成项目使用、发布或上传授权。
+每支视频上传前必须从候选构建重新复现并登记文件名、字节数、SHA-256、原始素材来源与
+授权说明、处理命令、构建提交、媒体参数和校验值。当前三段输入明确为 HappyHorse-1.1-T2V
+AI 生成测试素材，不能替代实拍发布证据。源码 zip/tar.gz、CI artifact 名称或本地文件存在
+都不等于演示物料已上传。
