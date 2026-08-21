@@ -53,3 +53,35 @@ ONNX Runtime 的提供者探测顺序为 CUDA → DirectML → CPU；当前锁�
 `docs/model-cards.md` 永久限制，不会因为探测到 GPU 就宣称 SAM/XMem 已验收。预览采用
 半分辨率快速路径，确认后再排队全量渲染；GUI 的 `--benchmark` 结果是可重复的窗口合同，
 不是神经模型吞吐承诺。
+
+## Phase 9 锁定权重本地技术运行
+
+2026-08-22 在 Windows、NVIDIA GeForce RTX 4060 Laptop GPU（8 GiB、驱动 572.83）、
+Python 3.13、PyTorch 2.7.1+cu118 上运行 `tools/phase9_real_pipeline.py`。本节是一次
+失败/待验收的技术记录，**不是**性能承诺或发布质量结论。输入均为
+HappyHorse-1.1-T2V AI 生成测试素材，非实拍，生成提示词未提供；其 SHA-256、媒体参数和
+使用边界见 `docs/release-assets.md` 与 `assets/demo-footage/README.md`。
+
+管线实际载入并校验了锁定的 SAM ViT-B、XMem、MiDaS DPT Swin2 Tiny 256，以及去物/移动
+使用的 ProPainter、RAFT-Things、ProPainter-RFC。推理分辨率为 640x352，输出再合成为
+1280x720 的 before/after 同屏 H.264 视频。没有调用 C++ 传统分割、质心跟踪或 CPU 修复
+降级路径。
+
+| 输入与操作 | 帧数 | 相邻掩码 IoU（min / P50） | 总墙钟 / 平均每帧 | 自动门槛 | 视觉质量结论 |
+| --- | ---: | --- | --- | --- | --- |
+| 人物 / 去物 | 194 | 0.9268 / 0.9897 | 95.93 s / 494.46 ms | IoU 通过（> 0.7） | **失败**：人物残影、背景修复纹理与棋盘伪影明显，未达到无拖影/无闪烁 |
+| 车辆 / 移动 | 194 | 0.9974 / 0.9999 | 109.02 s / 561.94 ms | IoU 通过（> 0.7） | **失败**：车体掩码/修复区域有明显纹理伪影，移动后存在贴图感，原位修复不可签收 |
+| 宠物 / 树干烟雾 | 194 | 0.9621 / 0.9919 | 28.17 s / 145.21 ms | IoU 通过（> 0.7；从第 72 帧目标首次完整可见处计） | **待维护者验收**：自动指标不证明遮挡正确；烟雾与狗轮廓关系不得标为通过或发布 |
+
+`needs_models` 在本机 `build/phase9-models` 实跑：
+
+```text
+100% tests passed, 0 tests failed out of 2
+Label Time Summary:
+needs_models = 11.25 sec*proc (2 tests)
+```
+
+其中 `model_checkpoint_smoke_test` 对六个锁定文件执行了 SHA-256、字节数和 PyTorch 载入
+校验。该 CTest 通过只证明权重供应链和可载入性；上述真实视频的视觉失败不因它而解除。
+在人物与车辆达到视觉门槛、宠物获得维护者肉眼确认，并以授权实拍素材复测之前，任务③④、
+RC 与任何 Release 上传均保持阻断。
