@@ -432,7 +432,10 @@ def process_case(
     output_path = BUILD / f"{name}-before-after.mp4"
     write_comparison_video(output_path, frames, output, fps)
     ious = []
-    for previous, current in zip(masks, masks[1:]):
+    # Frames before the seed are deliberately empty because the target is not
+    # yet visible. They are not a tracking transition and cannot be part of
+    # the adjacent-frame IoU quality calculation.
+    for previous, current in zip(masks[seed_frame:], masks[seed_frame + 1:]):
         previous_binary = previous > 0.5
         current_binary = current > 0.5
         union = np.logical_or(previous_binary, current_binary).sum()
@@ -452,6 +455,7 @@ def process_case(
         "inference_height": inference_frames[0].shape[0],
         "inference_width": inference_frames[0].shape[1],
         "xmem_seed_frame": seed_frame,
+        "mask_iou_eval_start_frame": seed_frame,
         "mask_iou_adjacent_min": min_iou,
         "mask_iou_adjacent_p50": float(np.percentile(ious, 50)),
         "mask_iou_gate": "passed (min > 0.7)",
