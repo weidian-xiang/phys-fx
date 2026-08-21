@@ -74,8 +74,14 @@ enum class PreviewQuality { kQuickHalfResolution, kFullResolution };
 /** @brief 参数改变后的预览分层状态机；快速帧不阻塞后台全量渲染。 */
 class PreviewScheduler {
  public:
-  void markDirty() noexcept { dirty_ = true; quality_ = PreviewQuality::kQuickHalfResolution; }
-  void confirmFullRender() noexcept { dirty_ = false; quality_ = PreviewQuality::kFullResolution; }
+  void markDirty() noexcept {
+    dirty_ = true;
+    quality_ = PreviewQuality::kQuickHalfResolution;
+  }
+  void confirmFullRender() noexcept {
+    dirty_ = false;
+    quality_ = PreviewQuality::kFullResolution;
+  }
   [[nodiscard]] bool dirty() const noexcept { return dirty_; }
   [[nodiscard]] PreviewQuality quality() const noexcept { return quality_; }
 

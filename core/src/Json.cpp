@@ -33,15 +33,14 @@ class Parser {
 
  private:
   Result<JsonValue> fail(std::string_view reason) const {
-    return Status{StatusCode::kInvalidArgument,
-                  "JSON 解析失败（字节 " + std::to_string(cursor_) + "）：" +
-                      std::string(reason) + "；请检查文件格式后重试"};
+    return Status{StatusCode::kInvalidArgument, "JSON 解析失败（字节 " + std::to_string(cursor_) +
+                                                    "）：" + std::string(reason) +
+                                                    "；请检查文件格式后重试"};
   }
 
   void skipSpace() {
-    while (cursor_ < text_.size() &&
-           (text_[cursor_] == ' ' || text_[cursor_] == '\n' || text_[cursor_] == '\r' ||
-            text_[cursor_] == '\t')) {
+    while (cursor_ < text_.size() && (text_[cursor_] == ' ' || text_[cursor_] == '\n' ||
+                                      text_[cursor_] == '\r' || text_[cursor_] == '\t')) {
       ++cursor_;
     }
   }
@@ -205,8 +204,8 @@ class Parser {
       if (cursor_ == exponent) return fail("指数部分缺少数字");
     }
     double value = 0.0;
-    const auto converted =
-        std::from_chars(text_.data() + start, text_.data() + cursor_, value, std::chars_format::general);
+    const auto converted = std::from_chars(text_.data() + start, text_.data() + cursor_, value,
+                                           std::chars_format::general);
     if (converted.ec != std::errc{} || converted.ptr != text_.data() + cursor_ ||
         !std::isfinite(value)) {
       return fail("数字超出有限范围");

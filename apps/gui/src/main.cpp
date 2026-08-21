@@ -264,7 +264,8 @@ void drawEditor(EditorState& state, GLuint previewTexture) {
   }
   if (state.previewScheduler.dirty()) {
     ImGui::SameLine();
-    if (ImGui::Button(state.english ? "Render full" : "全量渲染")) state.previewScheduler.confirmFullRender();
+    if (ImGui::Button(state.english ? "Render full" : "全量渲染"))
+      state.previewScheduler.confirmFullRender();
   }
   ImGui::EndChild();
 

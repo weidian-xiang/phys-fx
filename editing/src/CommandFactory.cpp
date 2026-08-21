@@ -114,14 +114,16 @@ core::Result<std::unique_ptr<IEditCommand>> deserializeCommand(std::string_view 
     curve.interpolation = stringValue(object, "interpolation");
     const auto* keyframes = object.find("keyframes");
     if (curve.interpolation.empty()) curve.interpolation = "linear";
-    if (!curve.parameter.empty() && (curve.interpolation == "linear" || curve.interpolation == "smooth") &&
+    if (!curve.parameter.empty() &&
+        (curve.interpolation == "linear" || curve.interpolation == "smooth") &&
         keyframes != nullptr && keyframes->array() != nullptr && keyframes->array()->size() >= 2U &&
         keyframes->array()->size() <= 1000U) {
       bool valid = true;
       for (const auto& keyframe : *keyframes->array()) {
         const auto frame = number(keyframe, "frame");
         const auto value = decimal(keyframe, "value");
-        if (!frame || !value || (!curve.keyframes.empty() && frame <= curve.keyframes.back().frame)) {
+        if (!frame || !value ||
+            (!curve.keyframes.empty() && frame <= curve.keyframes.back().frame)) {
           valid = false;
           break;
         }

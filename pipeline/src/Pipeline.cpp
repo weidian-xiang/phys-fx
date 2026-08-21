@@ -182,7 +182,8 @@ bool Pipeline::run(const core::Config& config) {
             !dependencies_.editCommandStack->execute(std::move(command).value(), context.scene)
                  .ok()) {
           core::Logger::error(
-              "stage=editing status=error reason=command_failed message=命令执行失败；请检查实体编号与命令参数");
+              "stage=editing status=error reason=command_failed "
+              "message=命令执行失败；请检查实体编号与命令参数");
           return false;
         }
       }

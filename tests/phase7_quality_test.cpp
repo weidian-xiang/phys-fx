@@ -26,7 +26,8 @@ int main() {
   assert(command.ok());
   physfx::core::SemanticScene scene{};
   assert(command.value()->execute(scene).ok());
-  assert(scene.parameterCurves.size() == 1U && scene.parameterCurves.front().keyframes.size() == 2U);
+  assert(scene.parameterCurves.size() == 1U &&
+         scene.parameterCurves.front().keyframes.size() == 2U);
   assert(command.value()->undo(scene).ok());
   assert(scene.parameterCurves.empty());
   assert(!physfx::editing::parseEditScript(R"({"version":2,"commands":[]})").ok());

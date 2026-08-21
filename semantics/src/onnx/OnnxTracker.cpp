@@ -10,8 +10,8 @@
 
 #include "physfx/semantics/OnnxTracker.h"
 
-#include <utility>
 #include <string>
+#include <utility>
 
 #if PHYSFX_ONNX_AVAILABLE
 #include <onnxruntime_cxx_api.h>

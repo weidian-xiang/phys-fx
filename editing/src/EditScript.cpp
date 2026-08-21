@@ -45,9 +45,9 @@ core::Result<std::vector<std::string>> parseEditScript(std::string_view json) {
     const auto* type = command.find("type");
     if (command.object() == nullptr || type == nullptr || type->string() == nullptr ||
         type->string()->empty()) {
-      return core::Status{core::StatusCode::kInvalidArgument,
-                          "编辑脚本第 " + std::to_string(index + 1U) +
-                              " 条命令缺少字符串 type；请修正后重试"};
+      return core::Status{
+          core::StatusCode::kInvalidArgument,
+          "编辑脚本第 " + std::to_string(index + 1U) + " 条命令缺少字符串 type；请修正后重试"};
     }
     serialized.push_back(core::serializeJson(command));
   }
@@ -62,15 +62,15 @@ core::Result<std::vector<std::string>> loadEditScript(const std::filesystem::pat
                         "无法读取编辑脚本 “" + path.string() + "”；请检查路径与权限"};
   }
   if (bytes > 1024U * 1024U) {
-    return core::Status{core::StatusCode::kInvalidArgument,
-                        "编辑脚本超过 1 MiB；请拆分工程后重试"};
+    return core::Status{core::StatusCode::kInvalidArgument, "编辑脚本超过 1 MiB；请拆分工程后重试"};
   }
   std::ifstream stream(path, std::ios::binary);
   if (!stream) {
     return core::Status{core::StatusCode::kIoError,
                         "无法打开编辑脚本 “" + path.string() + "”；请检查文件权限"};
   }
-  const std::string text((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+  const std::string text((std::istreambuf_iterator<char>(stream)),
+                         std::istreambuf_iterator<char>());
   return parseEditScript(text);
 }
 

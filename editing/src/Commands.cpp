@@ -33,10 +33,12 @@ core::Status missingEntity() { return {core::StatusCode::kNotFound, "实体不�
 AnimateParameter::AnimateParameter(core::ParameterCurve curve) : curve_(std::move(curve)) {}
 std::string_view AnimateParameter::name() const noexcept { return "animate_parameter"; }
 core::Status AnimateParameter::execute(core::SemanticScene& scene) {
-  const auto existing = std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
-                                      [&](const auto& item) { return item.parameter == curve_.parameter; });
+  const auto existing =
+      std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
+                   [&](const auto& item) { return item.parameter == curve_.parameter; });
   inserted_ = existing == scene.parameterCurves.end();
-  if (inserted_) scene.parameterCurves.push_back(curve_);
+  if (inserted_)
+    scene.parameterCurves.push_back(curve_);
   else {
     previous_ = *existing;
     *existing = curve_;
@@ -44,14 +46,18 @@ core::Status AnimateParameter::execute(core::SemanticScene& scene) {
   return core::Status::success();
 }
 core::Status AnimateParameter::undo(core::SemanticScene& scene) {
-  const auto existing = std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
-                                      [&](const auto& item) { return item.parameter == curve_.parameter; });
+  const auto existing =
+      std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
+                   [&](const auto& item) { return item.parameter == curve_.parameter; });
   if (existing == scene.parameterCurves.end()) {
     return {core::StatusCode::kNotFound, "关键帧曲线不存在；请刷新工程状态后重试撤销"};
   }
-  if (inserted_) scene.parameterCurves.erase(existing);
-  else if (previous_) *existing = *previous_;
-  else return {core::StatusCode::kInternalError, "关键帧命令尚未执行；请先执行命令再撤销"};
+  if (inserted_)
+    scene.parameterCurves.erase(existing);
+  else if (previous_)
+    *existing = *previous_;
+  else
+    return {core::StatusCode::kInternalError, "关键帧命令尚未执行；请先执行命令再撤销"};
   return core::Status::success();
 }
 std::string AnimateParameter::serialize() const {
