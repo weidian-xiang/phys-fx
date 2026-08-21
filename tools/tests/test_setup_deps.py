@@ -13,7 +13,13 @@ import io
 import tarfile
 import zipfile
 
-from tools.setup_deps import archive_valid, extract_archive, extract_zip, resolve_platform_item
+from tools.setup_deps import (
+    archive_valid,
+    extract_archive,
+    extract_zip,
+    prepare_runtime_aliases,
+    resolve_platform_item,
+)
 
 
 def test_archive_hash_and_strip_top_level(tmp_path) -> None:
@@ -53,3 +59,14 @@ def test_platform_archive_overrides_common_fields() -> None:
         {"version": "1", "archives": {"windows": {"archive_url": "win.zip"}, "linux": {"archive_url": "linux.tar.xz"}}}
     )
     assert resolved["archive_url"].endswith(("win.zip", "linux.tar.xz"))
+
+
+def test_linux_onnxruntime_soname_alias(tmp_path) -> None:
+    runtime = tmp_path / "runtimes" / "linux-x64" / "native"
+    runtime.mkdir(parents=True)
+    source = runtime / "libonnxruntime.so"
+    source.write_bytes(b"runtime")
+    prepare_runtime_aliases("onnxruntime", tmp_path, "1.18.1", "linux")
+    alias = runtime / "libonnxruntime.so.1.18.1"
+    assert alias.exists()
+    assert alias.read_bytes() == b"runtime"

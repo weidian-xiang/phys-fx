@@ -142,6 +142,23 @@ def resolve_platform_item(item: dict[str, object]) -> dict[str, object]:
     return resolved
 
 
+def prepare_runtime_aliases(name: str, destination: Path, version: str,
+                            current_platform: str | None = None) -> None:
+    """补齐归档未携带但 ELF SONAME 需要的版本化动态库名称。"""
+    platform = sys.platform if current_platform is None else current_platform
+    if name != "onnxruntime" or not platform.startswith("linux"):
+        return
+    runtime = destination / "runtimes" / "linux-x64" / "native"
+    source = runtime / "libonnxruntime.so"
+    alias = runtime / f"libonnxruntime.so.{version}"
+    if not source.exists() or alias.exists():
+        return
+    try:
+        alias.symlink_to(source.name)
+    except OSError:
+        shutil.copy2(source, alias)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="准备 PhysFX 可选第三方依赖")
     parser.add_argument("--component", choices=["ffmpeg", "onnxruntime", "all"], default="all")
@@ -191,6 +208,7 @@ def main() -> int:
             except (OSError, ValueError, zipfile.BadZipFile, tarfile.TarError) as exc:
                 print(f"依赖解包失败: {exc}", file=sys.stderr)
                 return 1
+            prepare_runtime_aliases(name, destination, str(item.get("version", "")))
             print(f"已下载并校验: {archive}")
         elif not any(destination.iterdir()):
             print(f"未发现实体包。请按 third_party/versions.md 放入: {destination}")
