@@ -3,8 +3,8 @@
 本报告记录 Phase 7 的代码、测试和外部证据状态。远端 CI、Gitee Release 与支付主体
 审批必须填写真实结果；`PENDING` 不是通过证据，也不会被发布门禁接受。
 
-CI_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32454845418
-PERFORMANCE_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32454845613
+CI_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32456492522
+PERFORMANCE_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32456492513
 RELEASE_URL=https://gitee.com/xiang-weidian/phys-fx/releases/tag/v0.6.0
 MATERIAL_STATUS=pending
 
@@ -12,8 +12,8 @@ MATERIAL_STATUS=pending
 
 | 项目 | 结果 | 证据/结论 |
 | --- | --- | --- |
-| 三版本远端标签与 Release | 已核验历史基线 | `v0.3.0`、`v0.4.0`、`v0.5.0` 两端标签与 Gitee Release 已存在；`v0.6.0` 待发布 |
-| CI 实跑记录 | 已通过 | Phase 7 主 CI 与性能预算 workflow 均成功；两条真实 URL 见本报告顶部 |
+| 远端标签与 Release | 部分通过 | `v0.3.0` 至 `v0.6.0` 两端标签均存在；Gitee `v0.6.0` Release 已存在，GitHub 同名 Release 仍缺失 |
+| CI 实跑记录 | 已通过 | 最新基线 `6cdc081` 的主 CI 与性能预算 workflow 均成功；两条真实 URL 见本报告顶部 |
 | 真实模型验收 | 永久降级已确认 | SAM/XMem/ProPainter/Depth Anything 继续遵循 `docs/model-cards.md`，不宣称神经模型验收 |
 | GUI 真实窗口 | 已核验 | GUI ON 构建、`physfx_gui.exe --self-test` 和 CTest 通过 |
 | 外部 Taichi | 已核验历史基线 | Phase 6.1 报告中的 Taichi CPU 记录继续有效；本阶段未改动其数值合同 |
@@ -69,7 +69,7 @@ pricing、privacy 已提供英文版。外部开发者演练记录以一个本�
 
 ## 发布与后续
 
-`v0.6.0` 标签和 Gitee Release 仅在远端证据可查询后填写本报告并运行：
+`v0.6.0` 标签和 Gitee Release 已可查询；演示物料与 GitHub Release 仍由 Phase 8 遗留清剿跟踪。报告前运行：
 
 ```text
 python tools/sync_check.py

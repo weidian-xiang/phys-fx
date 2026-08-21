@@ -1,4 +1,4 @@
-# PhysFX 插件 SDK（Phase 7）
+# PhysFX 插件 SDK（v1 冻结候选）
 
 本页描述第三方如何从零开发、打包、验签和安装一个模板插件。SDK 不删除社区版任何能力，
 签名只表达来源信任，不是功能解锁。插件不得上传视频、读取 API key 或绕过本地隐私设置。
@@ -14,6 +14,11 @@
 
 只使用公开的 `Frame`、`SceneContext` 和编辑命令接口；不要依赖 GUI 私有头文件。完整最小
 示例见 `plugins/examples/empty_effect/`。
+
+v1 插件推荐使用 `physfx::v1::plugins`、`physfx::v1::core` 等稳定入口；0.x 的
+`physfx::plugins` 拼写在整个 1.x 保持源码兼容。弃用至少保留一个 minor，公共接口和
+虚函数布局的破坏性变更不进入 1.x。跨编译器/运行库的二进制插件必须从源码重编译，详见
+`docs/compatibility.md`。
 
 ## 2. 打包与验签
 
