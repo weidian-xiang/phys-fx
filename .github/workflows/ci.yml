@@ -52,7 +52,7 @@ jobs:
       - name: 运行终局模型降级验收
         run: ctest --test-dir build/off --output-on-failure -L needs_models
       - name: pytest
-        run: python -m pytest -q tools/tests bindings/python/tests
+        run: PYTHONPATH="$PWD/bindings/python" python -m pytest -q tools/tests bindings/python/tests
       - name: 检查 Gitee 与 GitHub 镜像同步
         if: github.event_name == 'push'
         run: |
