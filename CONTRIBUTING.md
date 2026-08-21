@@ -1,5 +1,7 @@
 # 贡献指南
 
+AI 编码代理开始任何工作前必须先阅读并遵守根目录 AGENT_RULES.md
+
 欢迎提交问题、设计建议和代码贡献。当前项目进入 Phase 3，完整的提交、分支、PR
 和发布规则见 [`docs/git-workflow.md`](docs/git-workflow.md)。
 

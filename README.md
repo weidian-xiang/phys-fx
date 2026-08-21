@@ -1,5 +1,7 @@
 # PhysFX Engine
 
+AI 编码代理开始任何工作前必须先阅读并遵守根目录 AGENT_RULES.md
+
 [![PhysFX CI](https://github.com/weidian-xiang/phys-fx/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/weidian-xiang/phys-fx/actions/workflows/ci.yml)
 
 当前版本：`v0.6.0`
