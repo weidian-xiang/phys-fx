@@ -7,6 +7,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import hashlib
+import zipfile
+
 from tools import download_models
 
 
@@ -29,3 +32,28 @@ def test_incomplete_lock_record_is_rejected():
         "license": "MIT",
     }
     assert download_models.validate_record(record) == "缺少 tensor_contract"
+
+
+def test_download_extracts_and_verifies_locked_zip_member(tmp_path, monkeypatch):
+    payload = b"locked checkpoint bytes"
+    archive = tmp_path / "source.zip"
+    with zipfile.ZipFile(archive, "w") as output:
+        output.writestr("fixture.pth", payload)
+    target = tmp_path / "fixture.pth"
+
+    class Response:
+        def __enter__(self):
+            return archive.open("rb")
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+    monkeypatch.setattr(download_models.urllib.request, "urlopen", lambda request, timeout: Response())
+    assert download_models.download(
+        "https://example.invalid/fixture.zip",
+        target,
+        hashlib.sha256(payload).hexdigest(),
+        len(payload),
+        "fixture.pth",
+    )
+    assert target.read_bytes() == payload

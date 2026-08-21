@@ -41,6 +41,34 @@
       "status": "locked-noncommercial"
     },
     {
+      "id": "propainter-raft-things",
+      "filename": "raft_things-0000-d74fed4b.pth",
+      "url": "https://api.github.com/repos/osmr/imgclsmob/releases/assets/186005764",
+      "revision": "osmr/imgclsmob@9090c4ffc43e0b0ce4780edc52a849cd2004327c",
+      "bytes": 21110510,
+      "sha256": "65bcb8d0480a5a7d2d3bfc9c2c3daa47e2aead2f22be1ed2699833ce7dc31bd8",
+      "format": "ZIP archive containing PyTorch state_dict checkpoint",
+      "license": "BSD-3-Clause (upstream RAFT dependency)",
+      "tensor_contract": "RAFT-Things optical-flow checkpoint required by ProPainter streaming inference",
+      "archive_member": "raft_things-0000-d74fed4b.pth",
+      "source": "https://github.com/osmr/imgclsmob/releases/tag/v0.0.570",
+      "status": "locked"
+    },
+    {
+      "id": "propainter-rfc",
+      "filename": "propainter_rfc-0000-a865ddc0.pth",
+      "url": "https://api.github.com/repos/osmr/imgclsmob/releases/assets/186003075",
+      "revision": "osmr/imgclsmob@9090c4ffc43e0b0ce4780edc52a849cd2004327c",
+      "bytes": 20352154,
+      "sha256": "4c0c71e8bc838a0054465807745345fb618bfd0834f2bff040861b9d9f4df969",
+      "format": "ZIP archive containing PyTorch state_dict checkpoint",
+      "license": "S-Lab License 1.0 (non-commercial)",
+      "tensor_contract": "ProPainter-RFC flow-completion checkpoint required by ProPainter streaming inference",
+      "archive_member": "propainter_rfc-0000-a865ddc0.pth",
+      "source": "https://github.com/osmr/imgclsmob/releases/tag/v0.0.570",
+      "status": "locked-noncommercial"
+    },
+    {
       "id": "midas-dpt-swin2-tiny",
       "filename": "midas-dpt-swin2-tiny-256.pt",
       "url": "https://api.github.com/repos/isl-org/MiDaS/releases/assets/89330783",

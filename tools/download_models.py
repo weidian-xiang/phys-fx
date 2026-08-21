@@ -19,6 +19,7 @@ import shutil
 import sys
 import urllib.error
 import urllib.request
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,8 +60,16 @@ def validate_record(record: object) -> str | None:
     return None
 
 
-def download(url: str, target: Path, expected: str, expected_bytes: int | None = None) -> bool:
+def download(
+    url: str,
+    target: Path,
+    expected: str,
+    expected_bytes: int | None = None,
+    archive_member: str | None = None,
+) -> bool:
     temporary = target.with_suffix(target.suffix + ".part")
+    archive_temporary = target.with_suffix(target.suffix + ".archive.part")
+    download_target = archive_temporary if archive_member else temporary
     try:
         request = urllib.request.Request(
             url,
@@ -69,12 +78,27 @@ def download(url: str, target: Path, expected: str, expected_bytes: int | None =
                 "Accept": "application/octet-stream",
             },
         )
-        with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as output:
+        with urllib.request.urlopen(request, timeout=120) as response, download_target.open("wb") as output:
             shutil.copyfileobj(response, output, length=1024 * 1024)
     except (OSError, ValueError, urllib.error.URLError) as exc:
         print(f"模型下载失败: {exc}; 可手动放置到 {target}", file=sys.stderr)
         temporary.unlink(missing_ok=True)
+        archive_temporary.unlink(missing_ok=True)
         return False
+    if archive_member:
+        try:
+            with zipfile.ZipFile(archive_temporary) as archive:
+                member = archive.getinfo(archive_member)
+                if member.is_dir() or Path(member.filename).name != member.filename:
+                    raise ValueError(f"不安全或无效的 ZIP 成员: {member.filename}")
+                with archive.open(member) as source, temporary.open("wb") as output:
+                    shutil.copyfileobj(source, output, length=1024 * 1024)
+        except (OSError, ValueError, zipfile.BadZipFile, KeyError) as exc:
+            print(f"模型 ZIP 解包失败: {exc}", file=sys.stderr)
+            temporary.unlink(missing_ok=True)
+            archive_temporary.unlink(missing_ok=True)
+            return False
+        archive_temporary.unlink(missing_ok=True)
     if expected_bytes is not None and temporary.stat().st_size != expected_bytes:
         print(
             f"模型大小不匹配: 期望 {expected_bytes}，实际 {temporary.stat().st_size}",
@@ -92,7 +116,7 @@ def download(url: str, target: Path, expected: str, expected_bytes: int | None =
     return True
 
 
-def install_lock(selected_ids: set[str] | None = None) -> int:
+def install_lock(selected_ids: set[str] | None = None, force: bool = False) -> int:
     try:
         payload = json.loads(LOCK_FILE.read_text(encoding="utf-8"))
         records = payload["models"]
@@ -115,12 +139,18 @@ def install_lock(selected_ids: set[str] | None = None) -> int:
         target = MODELS / Path(record["filename"]).name
         expected = record["sha256"]
         expected_bytes = record["bytes"]
-        if (target.exists() and target.stat().st_size == expected_bytes and
+        if (not force and target.exists() and target.stat().st_size == expected_bytes and
                 digest(target).lower() == expected.lower()):
             print(f"模型已校验: {target} ({expected})")
             continue
         print(f"准备下载 {record['id']} revision={record['revision']} format={record['format']}")
-        if not download(record["url"], target, expected, expected_bytes):
+        if not download(
+            record["url"],
+            target,
+            expected,
+            expected_bytes,
+            record.get("archive_member"),
+        ):
             return 1
     return 0
 
@@ -131,11 +161,12 @@ def main() -> int:
     parser.add_argument("--sha256", help="模型 SHA256")
     parser.add_argument("--name", default="model.onnx", help="保存文件名")
     parser.add_argument("--lock", action="store_true", help="按 docs/model-lock.json 下载全部锁定模型")
+    parser.add_argument("--force", action="store_true", help="重新下载并校验已存在的锁定模型")
     parser.add_argument("--model", action="append", dest="model_ids",
                         help="只下载指定锁记录，可重复传入")
     args = parser.parse_args()
     if args.lock:
-        return install_lock(set(args.model_ids) if args.model_ids else None)
+        return install_lock(set(args.model_ids) if args.model_ids else None, force=args.force)
     if Path(args.name).name != args.name:
         print("模型文件名不得包含目录", file=sys.stderr)
         return 2
