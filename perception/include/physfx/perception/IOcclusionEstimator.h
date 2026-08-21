@@ -22,7 +22,7 @@ namespace physfx::perception {
  * @return 遮挡掩码。
  * @todo Phase2 接入实例分割与深度排序模型。
  */
-class IOcclusionEstimator {
+class PHYSFX_API IOcclusionEstimator {
  public:
   virtual ~IOcclusionEstimator() = default;
   /**

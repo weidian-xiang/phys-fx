@@ -19,7 +19,7 @@ namespace physfx::platform {
  * @return 平台状态码。
  * @todo Phase2 接入 OpenGL 4.5+ / Vulkan 后端。
  */
-class IGpuContext {
+class PHYSFX_API IGpuContext {
  public:
   virtual ~IGpuContext() = default;
   /** @brief 初始化 GPU 上下文。 @return 平台状态码。 @todo Phase2 实现：创建图形上下文。 */
@@ -31,7 +31,7 @@ class IGpuContext {
 };
 
 /** @brief Phase 1 GPU 上下文桩。 @todo Phase2 替换为真实图形后端。 */
-class StubGpuContext final : public IGpuContext {
+class PHYSFX_API StubGpuContext final : public IGpuContext {
  public:
   PlatformStatus initialize() override;
   void shutdown() noexcept override;

@@ -13,7 +13,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 将线性或平滑数值关键帧曲线写入语义场景。 */
-class AnimateParameter final : public IEditCommand {
+class PHYSFX_API AnimateParameter final : public IEditCommand {
  public:
   explicit AnimateParameter(core::ParameterCurve curve);
   [[nodiscard]] std::string_view name() const noexcept override;

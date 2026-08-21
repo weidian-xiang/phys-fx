@@ -15,7 +15,7 @@
 namespace physfx::editing::commands {
 
 /** @brief Phase 2 默认空编辑命令。 */
-class EmptyCommand final : public IEditCommand {
+class PHYSFX_API EmptyCommand final : public IEditCommand {
  public:
   [[nodiscard]] std::string_view name() const noexcept override;
   core::Status execute(core::SemanticScene& scene) override;

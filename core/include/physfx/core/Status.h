@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 
+#include "physfx/core/Export.h"
+
 namespace physfx::core {
 
 /** @brief 全引擎统一状态码。 */
@@ -28,7 +30,7 @@ enum class StatusCode {
 };
 
 /** @brief 不携带返回值的统一操作状态。 */
-struct Status {
+struct PHYSFX_API Status {
   StatusCode code{StatusCode::kOk};
   std::string message{};
 

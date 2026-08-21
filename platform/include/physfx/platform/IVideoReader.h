@@ -23,7 +23,7 @@ namespace physfx::platform {
  * @return 平台状态码。
  * @todo Phase2 接入 FFmpeg 解码和 OpenCV 帧转换。
  */
-class IVideoReader {
+class PHYSFX_API IVideoReader {
  public:
   virtual ~IVideoReader() = default;
   /** @brief 打开视频。 @param path 输入路径。 @return 平台状态码。 @todo Phase2 实现：FFmpeg 解码。
@@ -38,7 +38,7 @@ class IVideoReader {
 };
 
 /** @brief Phase 1 视频读取桩。 @todo Phase2 替换为 FFmpeg 实现。 */
-class StubVideoReader final : public IVideoReader {
+class PHYSFX_API StubVideoReader final : public IVideoReader {
  public:
   PlatformStatus open(const std::filesystem::path& path) override;
   PlatformStatus read(core::Frame& frame) override;

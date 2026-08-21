@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "physfx/core/Export.h"
+
 namespace physfx::core {
 
 /** @brief 视频帧的颜色格式。 @todo Phase2 支持更多 FFmpeg 像素格式。 */

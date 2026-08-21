@@ -19,7 +19,7 @@
 namespace physfx::editing {
 
 /** @brief 管理编辑命令执行、撤销和重做历史。 */
-class EditCommandStack {
+class PHYSFX_API EditCommandStack {
  public:
   /** @brief 执行并记录命令。 @param command 命令所有权。 @param scene 场景。 @return 状态。 */
   core::Status execute(std::unique_ptr<IEditCommand> command, core::SemanticScene& scene);

@@ -34,7 +34,7 @@ struct PluginMetadata {
  * @return 插件处理是否成功。
  * @todo Phase2 增加动态库加载与沙箱能力。
  */
-class IEffectPlugin {
+class PHYSFX_API IEffectPlugin {
  public:
   virtual ~IEffectPlugin() = default;
   /** @brief 获取插件元数据。 @return 插件元数据。 @todo Phase2 实现：增加 ABI 信息。 */

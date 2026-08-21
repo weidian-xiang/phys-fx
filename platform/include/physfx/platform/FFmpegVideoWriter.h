@@ -17,7 +17,7 @@
 namespace physfx::platform {
 
 /** @brief 基于 FFmpeg C API 的 H.264/MP4 RGB24 视频写入器。 */
-class FFmpegVideoWriter final : public IVideoWriter {
+class PHYSFX_API FFmpegVideoWriter final : public IVideoWriter {
  public:
   FFmpegVideoWriter();
   ~FFmpegVideoWriter() override;

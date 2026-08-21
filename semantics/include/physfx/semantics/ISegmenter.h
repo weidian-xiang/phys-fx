@@ -19,7 +19,7 @@
 namespace physfx::semantics {
 
 /** @brief 视频实例分割器抽象接口。 */
-class ISegmenter {
+class PHYSFX_API ISegmenter {
  public:
   virtual ~ISegmenter() = default;
   /** @brief 分割单帧实体。 @param frame 输入帧。 @return 实体列表或错误状态。 */

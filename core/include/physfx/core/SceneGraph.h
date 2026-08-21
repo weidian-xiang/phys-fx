@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "physfx/core/Export.h"
+
 namespace physfx::core {
 
 /** @brief 场景图中的节点占位。 @todo Phase2 增加变换、材质和父子关系。 */
@@ -28,7 +30,7 @@ struct SceneNode {
  * @brief 用于描述视频场景与特效对象关系的场景图。
  * @todo Phase2 实现场景图遍历、序列化和空间索引。
  */
-class SceneGraph {
+class PHYSFX_API SceneGraph {
  public:
   /** @brief 添加一个节点。 @param node 要添加的节点。 */
   void addNode(SceneNode node);

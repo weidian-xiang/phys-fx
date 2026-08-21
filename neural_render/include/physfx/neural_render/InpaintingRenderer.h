@@ -20,7 +20,7 @@ namespace physfx::neural_render {
  * 这是无模型环境的工程基线：使用邻域颜色传播保持接口可运行，不宣称神经修复质量。
  * 后续 ProPainter/E2FGVI ONNX 后端应保持相同渲染出口。
  */
-class InpaintingRenderer final : public INeuralRenderer {
+class PHYSFX_API InpaintingRenderer final : public INeuralRenderer {
  public:
   [[nodiscard]] std::string_view name() const noexcept override;
   core::Result<core::Frame> render(const core::Frame& frame, const core::SceneContext& scene,

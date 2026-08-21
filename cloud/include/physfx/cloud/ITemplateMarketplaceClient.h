@@ -29,7 +29,7 @@ struct MarketplaceTemplate {
 };
 
 /** @brief 模板市场客户端接口；本阶段不提供实现和网络调用。 */
-class ITemplateMarketplaceClient {
+class PHYSFX_API ITemplateMarketplaceClient {
  public:
   virtual ~ITemplateMarketplaceClient() = default;
   /** @brief 查询模板。 @param keyword 搜索词。 @return 模板列表或错误状态。 */
@@ -42,7 +42,7 @@ class ITemplateMarketplaceClient {
 };
 
 /** @brief 从本地索引读取模板的离线市场客户端。 */
-class LocalTemplateMarketplaceClient final : public ITemplateMarketplaceClient {
+class PHYSFX_API LocalTemplateMarketplaceClient final : public ITemplateMarketplaceClient {
  public:
   explicit LocalTemplateMarketplaceClient(std::filesystem::path root = {});
   core::Result<std::vector<MarketplaceTemplate>> search(const std::string& keyword) override;

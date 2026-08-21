@@ -12,6 +12,8 @@
 
 #include <array>
 
+#include "physfx/core/Export.h"
+
 namespace physfx::core {
 
 /** @brief 三维浮点向量。 @todo Phase2 实现完整的数学运算。 */

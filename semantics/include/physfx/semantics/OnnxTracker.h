@@ -18,7 +18,7 @@
 namespace physfx::semantics {
 
 /** @brief XMem 类 ONNX 时序掩码传播适配器。 */
-class OnnxTracker final : public ITracker {
+class PHYSFX_API OnnxTracker final : public ITracker {
  public:
   explicit OnnxTracker(std::filesystem::path modelPath);
   ~OnnxTracker() override;

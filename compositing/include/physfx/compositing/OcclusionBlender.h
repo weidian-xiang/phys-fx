@@ -16,7 +16,7 @@
 namespace physfx::compositing {
 
 /** @brief 遮挡混合器接口占位。 @todo Phase2 实现基于深度的前后景混合。 */
-class OcclusionBlender {
+class PHYSFX_API OcclusionBlender {
  public:
   /** @brief 执行遮挡混合。 @param frame 输入帧。 @param mask 遮挡掩码。 @return 输出帧。 */
   core::Frame blend(const core::Frame& frame, const core::OcclusionMask& mask) const;

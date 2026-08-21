@@ -30,7 +30,7 @@ struct PipelineContext {
  * @return 阶段是否成功。
  * @todo Phase2 支持异步执行和 DAG 调度。
  */
-class Stage {
+class PHYSFX_API Stage {
  public:
   virtual ~Stage() = default;
   /** @brief 返回阶段名称。 @return 稳定的阶段名称。 @todo Phase2 实现：支持配置别名。 */

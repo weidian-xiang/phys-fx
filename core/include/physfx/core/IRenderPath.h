@@ -23,7 +23,7 @@ namespace physfx::core {
 enum class RenderPathKind { kCompositing, kNeural };
 
 /** @brief 物理合成与神经重渲染共享的单出口契约。 */
-class IRenderPath {
+class PHYSFX_API IRenderPath {
  public:
   virtual ~IRenderPath() = default;
   /** @brief 返回渲染路径名称。 @return 稳定名称。 */

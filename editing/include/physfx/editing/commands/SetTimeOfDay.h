@@ -17,7 +17,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 设置场景时段的命令骨架。 */
-class SetTimeOfDay final : public IEditCommand {
+class PHYSFX_API SetTimeOfDay final : public IEditCommand {
  public:
   /** @brief 创建时段命令。 @param timeOfDay 目标时段。 */
   explicit SetTimeOfDay(core::TimeOfDay timeOfDay);

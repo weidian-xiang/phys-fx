@@ -21,7 +21,7 @@ namespace physfx::perception {
  * @return 检测到的地面平面。
  * @todo Phase2 实现点云拟合与坐标系校准。
  */
-class IGroundPlaneDetector {
+class PHYSFX_API IGroundPlaneDetector {
  public:
   virtual ~IGroundPlaneDetector() = default;
   /**

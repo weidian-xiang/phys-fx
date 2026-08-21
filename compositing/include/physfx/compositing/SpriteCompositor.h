@@ -15,7 +15,7 @@
 namespace physfx::compositing {
 
 /** @brief CPU 精灵合成器，支持 alpha/加色混合和语义实体掩码遮挡。 */
-class SpriteCompositor final : public ICompositor {
+class PHYSFX_API SpriteCompositor final : public ICompositor {
  public:
   /** @brief 创建合成器。 @param gain 全局粒子亮度增益。 @param warmth 色温偏移。 */
   explicit SpriteCompositor(float gain = 1.0F, float warmth = 0.0F);

@@ -16,7 +16,7 @@
 namespace physfx::compositing {
 
 /** @brief 色彩匹配器接口占位。 @todo Phase2 实现曝光、白平衡和色调匹配。 */
-class ColorMatcher {
+class PHYSFX_API ColorMatcher {
  public:
   /** @brief 匹配帧色彩。 @param frame 输入帧。 @param scene 场景光照。 @return 匹配后的帧。 */
   core::Frame match(const core::Frame& frame, const core::SceneContext& scene) const;

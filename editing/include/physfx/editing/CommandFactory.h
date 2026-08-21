@@ -18,6 +18,7 @@
 namespace physfx::editing {
 
 /** @brief 从编辑脚本中的单条 JSON 对象构造命令。 */
-[[nodiscard]] core::Result<std::unique_ptr<IEditCommand>> deserializeCommand(std::string_view json);
+[[nodiscard]] PHYSFX_API core::Result<std::unique_ptr<IEditCommand>> deserializeCommand(
+    std::string_view json);
 
 }  // namespace physfx::editing

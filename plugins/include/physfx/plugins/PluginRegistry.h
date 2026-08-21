@@ -22,7 +22,7 @@ namespace physfx::plugins {
  * @brief 插件注册表。
  * @todo Phase2 支持从目录发现、加载和卸载动态插件。
  */
-class PluginRegistry {
+class PHYSFX_API PluginRegistry {
  public:
   /** @brief 注册插件。 @param plugin 插件实例。 @return 是否注册成功。 */
   bool registerPlugin(std::shared_ptr<IEffectPlugin> plugin);

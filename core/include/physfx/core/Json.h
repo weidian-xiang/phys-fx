@@ -18,7 +18,7 @@
 namespace physfx::core {
 
 /** @brief 有资源上限的 JSON 值，用于解析不可信的工程、脚本和模板清单。 */
-class JsonValue {
+class PHYSFX_API JsonValue {
  public:
   using Array = std::vector<JsonValue>;
   using Object = std::map<std::string, JsonValue, std::less<>>;
@@ -52,8 +52,8 @@ struct JsonLimits {
 };
 
 /** @brief 严格解析 UTF-8 JSON；拒绝重复键、非有限数字和尾随内容。 */
-[[nodiscard]] Result<JsonValue> parseJson(std::string_view text, JsonLimits limits = {});
+[[nodiscard]] PHYSFX_API Result<JsonValue> parseJson(std::string_view text, JsonLimits limits = {});
 /** @brief 生成稳定、紧凑的 JSON，供跨模块传递已校验值。 */
-[[nodiscard]] std::string serializeJson(const JsonValue& value);
+[[nodiscard]] PHYSFX_API std::string serializeJson(const JsonValue& value);
 
 }  // namespace physfx::core

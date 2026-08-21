@@ -19,7 +19,7 @@
 namespace physfx::semantics {
 
 /** @brief 多目标时序跟踪器抽象接口。 */
-class ITracker {
+class PHYSFX_API ITracker {
  public:
   virtual ~ITracker() = default;
   /**

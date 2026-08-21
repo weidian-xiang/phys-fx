@@ -21,7 +21,7 @@ namespace physfx::perception {
  * @return 场景光照参数。
  * @todo Phase2 接入学习式或可微光照估计模型。
  */
-class ILightEstimator {
+class PHYSFX_API ILightEstimator {
  public:
   virtual ~ILightEstimator() = default;
   /**

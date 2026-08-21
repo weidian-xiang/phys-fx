@@ -18,7 +18,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 复制实体并为副本分配稳定的新编号。 */
-class CopyEntity final : public IEditCommand {
+class PHYSFX_API CopyEntity final : public IEditCommand {
  public:
   explicit CopyEntity(std::uint64_t entityId);
   [[nodiscard]] std::string_view name() const noexcept override;

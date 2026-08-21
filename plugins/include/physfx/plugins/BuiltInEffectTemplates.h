@@ -27,7 +27,7 @@ struct EffectTemplateParameters {
 };
 
 /** @brief 内置火花/烟尘模板插件。 */
-class BuiltInEffectTemplate final : public IEffectPlugin {
+class PHYSFX_API BuiltInEffectTemplate final : public IEffectPlugin {
  public:
   BuiltInEffectTemplate(std::string id, std::string displayName,
                         EffectTemplateParameters parameters);
@@ -46,6 +46,6 @@ class BuiltInEffectTemplate final : public IEffectPlugin {
 };
 
 /** @brief 向注册表注册火花与烟尘两个真实模板。 @return 两个模板均注册成功时为 true。 */
-bool registerBuiltInEffectTemplates(PluginRegistry& registry);
+PHYSFX_API bool registerBuiltInEffectTemplates(PluginRegistry& registry);
 
 }  // namespace physfx::plugins

@@ -11,7 +11,7 @@
 namespace physfx::compositing {
 
 /** @brief 换季节模板的轻量天空/全局色调合成阶段。 */
-class SeasonCompositor final : public ICompositor {
+class PHYSFX_API SeasonCompositor final : public ICompositor {
  public:
   core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                       const core::SimulationResult& simulation) override;

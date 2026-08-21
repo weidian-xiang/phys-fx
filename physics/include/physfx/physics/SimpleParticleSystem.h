@@ -18,7 +18,7 @@
 namespace physfx::physics {
 
 /** @brief 确定性的纯 CPU 粒子系统，支持火花和烟尘预设。 */
-class SimpleParticleSystem final : public IPhysicsSimulator {
+class PHYSFX_API SimpleParticleSystem final : public IPhysicsSimulator {
  public:
   core::Status initialize(const SimConfig& config) override;
   core::Result<core::SimulationResult> simulate(const core::Frame& frame,

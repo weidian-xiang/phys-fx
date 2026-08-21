@@ -28,11 +28,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def completion_report() -> Path:
     """Return the current phase report, retaining Phase 6 compatibility."""
+    phase8 = ROOT / "docs/phase8-completion-report.md"
     phase7 = ROOT / "docs/phase7-completion-report.md"
+    if phase8.exists():
+        return phase8
     return phase7 if phase7.exists() else ROOT / "docs/phase6-completion-report.md"
 
 
 def current_phase() -> int:
+    if (ROOT / "docs/phase8-completion-report.md").exists():
+        return 8
     return 7 if (ROOT / "docs/phase7-completion-report.md").exists() else 6
 
 
@@ -66,7 +71,7 @@ def check_versions() -> tuple[bool, str]:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     values = [re.search(r"project\(PhysFX VERSION ([^) ]+)", cmake),
               re.search(r'__version__\s*=\s*["\']([^"\']+)', package),
-              re.search(r"当前版本[：:]\s*`?v(0\.\d+\.\d+(?:-[\w.]+)?)", readme)]
+              re.search(r"当前版本[：:]\s*`?v(\d+\.\d+\.\d+(?:-[\w.]+)?)", readme)]
     versions = [match.group(1) if match else "" for match in values]
     ok = len(set(versions)) == 1 and bool(versions[0])
     return ok, f"版本: {', '.join(versions)}"
@@ -106,19 +111,28 @@ def check_ci() -> tuple[bool, str]:
 def check_release() -> tuple[bool, str]:
     report = completion_report()
     text = report.read_text(encoding="utf-8") if report.exists() else ""
-    release = re.search(r"^RELEASE_URL=(https://\S+)$", text, re.MULTILINE)
     material = re.search(r"^MATERIAL_STATUS=(ready|pending)$", text, re.MULTILINE)
-    ok = bool(release and material)
-    if not ok:
-        return False, "缺少真实 Release URL 或 MATERIAL_STATUS=ready|pending"
-    state = "物料齐全" if material.group(1) == "ready" else "物料补充中（允许基础 Release 先行）"
-    return True, f"Release: {release.group(1)}；{state}"
+    if material is None:
+        return False, "缺少 MATERIAL_STATUS=ready|pending"
+    if material.group(1) != "ready":
+        return False, "演示物料仍为 pending；完成门禁不允许带入发布"
+    if current_phase() >= 8:
+        gitee = re.search(r"^GITEE_RELEASE_URL=(https://\S+)$", text, re.MULTILINE)
+        github = re.search(r"^GITHUB_RELEASE_URL=(https://\S+)$", text, re.MULTILINE)
+        if not gitee or not github:
+            return False, "Phase 8 缺少 Gitee/GitHub 双平台 Release URL"
+        return True, f"双平台 Release 可查；物料齐全：{gitee.group(1)}；{github.group(1)}"
+    release = re.search(r"^RELEASE_URL=(https://\S+)$", text, re.MULTILINE)
+    if not release:
+        return False, "缺少真实 Release URL"
+    return True, f"Release: {release.group(1)}；物料齐全"
 
 
 def check_roadmap() -> tuple[bool, str]:
     text = (ROOT / "docs/roadmap.md").read_text(encoding="utf-8")
-    ok = "Phase 7" in text and "Phase 6" in text
-    return ok, "路线图包含 Phase 6 状态和 Phase 7 粗规划" if ok else "路线图缺少下一阶段规划"
+    required = ("Phase 8", "Phase 9") if current_phase() >= 8 else ("Phase 7", "Phase 6")
+    ok = all(item in text for item in required)
+    return ok, f"路线图包含 {required[0]} 与 {required[1]}" if ok else "路线图缺少下一阶段规划"
 
 
 def check_degradation() -> tuple[bool, str]:

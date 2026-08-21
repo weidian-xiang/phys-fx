@@ -18,7 +18,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 删除实体的命令骨架。 */
-class DeleteEntity final : public IEditCommand {
+class PHYSFX_API DeleteEntity final : public IEditCommand {
  public:
   /** @brief 创建删除命令。 @param entityId 实体编号。 */
   explicit DeleteEntity(std::uint64_t entityId);

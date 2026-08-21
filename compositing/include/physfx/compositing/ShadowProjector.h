@@ -15,7 +15,7 @@
 namespace physfx::compositing {
 
 /** @brief 阴影投射器接口占位。 @todo Phase2 实现软阴影和地面接触阴影。 */
-class ShadowProjector {
+class PHYSFX_API ShadowProjector {
  public:
   /** @brief 检查投影条件。 @param scene 场景上下文。 @return 当前是否可投影。 */
   [[nodiscard]] bool canProject(const core::SceneContext& scene) const noexcept;

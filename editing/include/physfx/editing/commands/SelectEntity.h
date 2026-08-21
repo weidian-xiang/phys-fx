@@ -18,7 +18,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 选择语义实体，供后续编辑命令和模板使用。 */
-class SelectEntity final : public IEditCommand {
+class PHYSFX_API SelectEntity final : public IEditCommand {
  public:
   explicit SelectEntity(std::uint64_t entityId);
   [[nodiscard]] std::string_view name() const noexcept override;

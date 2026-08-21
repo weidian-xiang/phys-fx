@@ -13,7 +13,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 设置全局季节预设；换季节模板将其与天空和色彩阶段组合。 */
-class SetSeason final : public IEditCommand {
+class PHYSFX_API SetSeason final : public IEditCommand {
  public:
   explicit SetSeason(core::Season season);
   [[nodiscard]] std::string_view name() const noexcept override;

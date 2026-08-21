@@ -24,7 +24,7 @@ namespace physfx::compositing {
  * @return 合成后的帧。
  * @todo Phase2 接入 OpenGL/Vulkan 渲染、遮挡、阴影和色彩匹配。
  */
-class ICompositor {
+class PHYSFX_API ICompositor {
  public:
   virtual ~ICompositor() = default;
   /**

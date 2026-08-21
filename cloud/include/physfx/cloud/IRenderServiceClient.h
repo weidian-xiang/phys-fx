@@ -38,7 +38,7 @@ struct RenderJob {
 };
 
 /** @brief 云渲染客户端接口；本阶段不提供实现和网络调用。 */
-class IRenderServiceClient {
+class PHYSFX_API IRenderServiceClient {
  public:
   virtual ~IRenderServiceClient() = default;
   /** @brief 提交渲染任务。 @param request 任务描述。 @return 任务或错误状态。 */
@@ -50,7 +50,7 @@ class IRenderServiceClient {
 };
 
 /** @brief 零网络依赖的本地云服务客户端；用于 CLI、开发和合同测试。 */
-class LocalRenderServiceClient final : public IRenderServiceClient {
+class PHYSFX_API LocalRenderServiceClient final : public IRenderServiceClient {
  public:
   explicit LocalRenderServiceClient(std::filesystem::path root = {});
   core::Result<RenderJob> submit(const RenderJobRequest& request) override;

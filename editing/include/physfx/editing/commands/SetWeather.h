@@ -17,7 +17,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 设置场景天气的命令骨架。 */
-class SetWeather final : public IEditCommand {
+class PHYSFX_API SetWeather final : public IEditCommand {
  public:
   /** @brief 创建天气命令。 @param weather 目标天气。 */
   explicit SetWeather(core::Weather weather);

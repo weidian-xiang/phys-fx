@@ -23,7 +23,7 @@ namespace physfx::platform {
  * @return 平台状态码。
  * @todo Phase2 接入 FFmpeg 编码。
  */
-class IVideoWriter {
+class PHYSFX_API IVideoWriter {
  public:
   virtual ~IVideoWriter() = default;
   /**
@@ -45,7 +45,7 @@ class IVideoWriter {
 };
 
 /** @brief Phase 1 视频写入桩。 @todo Phase2 替换为 FFmpeg 实现。 */
-class StubVideoWriter final : public IVideoWriter {
+class PHYSFX_API StubVideoWriter final : public IVideoWriter {
  public:
   PlatformStatus open(const std::filesystem::path& path, std::uint32_t width,
                       std::uint32_t height) override;

@@ -18,8 +18,8 @@
 namespace physfx::platform {
 
 /** @brief 按构建能力创建视频读取器；无 FFmpeg 时返回桩。 */
-[[nodiscard]] std::unique_ptr<IVideoReader> createVideoReader();
+[[nodiscard]] PHYSFX_API std::unique_ptr<IVideoReader> createVideoReader();
 /** @brief 按构建能力创建视频写入器；无 FFmpeg 时返回桩。 */
-[[nodiscard]] std::unique_ptr<IVideoWriter> createVideoWriter();
+[[nodiscard]] PHYSFX_API std::unique_ptr<IVideoWriter> createVideoWriter();
 
 }  // namespace physfx::platform

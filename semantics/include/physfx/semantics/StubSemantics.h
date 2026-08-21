@@ -17,20 +17,20 @@
 namespace physfx::semantics {
 
 /** @brief 返回单个假实体的分割桩。 */
-class StubSegmenter final : public ISegmenter {
+class PHYSFX_API StubSegmenter final : public ISegmenter {
  public:
   core::Result<std::vector<core::Entity>> segment(const core::Frame& frame) override;
 };
 
 /** @brief 原样返回实体的跟踪桩。 */
-class StubTracker final : public ITracker {
+class PHYSFX_API StubTracker final : public ITracker {
  public:
   core::Result<std::vector<core::Entity>> track(const core::Frame& frame,
                                                 const std::vector<core::Entity>& entities) override;
 };
 
 /** @brief 写入占位属性的实体属性估计桩。 */
-class StubEntityAttributeEstimator final : public IEntityAttributeEstimator {
+class PHYSFX_API StubEntityAttributeEstimator final : public IEntityAttributeEstimator {
  public:
   core::Status estimate(const core::Frame& frame, core::Entity& entity) override;
 };

@@ -23,7 +23,7 @@ namespace physfx::core {
  * @brief 空管线运行配置。
  * @todo Phase2 从 JSON/YAML 解析完整的模块工厂配置。
  */
-struct Config {
+struct PHYSFX_API Config {
   std::string inputPath{};
   std::string outputPath{};
   std::size_t frameCount{1};

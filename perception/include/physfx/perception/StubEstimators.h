@@ -19,31 +19,31 @@
 namespace physfx::perception {
 
 /** @brief Phase 1 光照估计桩。 @todo Phase2 替换为真实模型。 */
-class StubLightEstimator final : public ILightEstimator {
+class PHYSFX_API StubLightEstimator final : public ILightEstimator {
  public:
   core::LightParams estimate(const core::Frame& frame) override;
 };
 
 /** @brief Phase 1 深度估计桩。 @todo Phase2 替换为真实模型。 */
-class StubDepthEstimator final : public IDepthEstimator {
+class PHYSFX_API StubDepthEstimator final : public IDepthEstimator {
  public:
   core::DepthMap estimate(const core::Frame& frame) override;
 };
 
 /** @brief Phase 1 相机跟踪桩。 @todo Phase2 替换为真实跟踪器。 */
-class StubCameraTracker final : public ICameraTracker {
+class PHYSFX_API StubCameraTracker final : public ICameraTracker {
  public:
   core::CameraPose track(const core::Frame& frame) override;
 };
 
 /** @brief Phase 1 地面平面检测桩。 @todo Phase2 替换为真实检测器。 */
-class StubGroundPlaneDetector final : public IGroundPlaneDetector {
+class PHYSFX_API StubGroundPlaneDetector final : public IGroundPlaneDetector {
  public:
   core::Plane detect(const core::DepthMap& depth) override;
 };
 
 /** @brief Phase 1 遮挡估计桩。 @todo Phase2 替换为真实估计器。 */
-class StubOcclusionEstimator final : public IOcclusionEstimator {
+class PHYSFX_API StubOcclusionEstimator final : public IOcclusionEstimator {
  public:
   core::OcclusionMask estimate(const core::Frame& frame, const core::DepthMap& depth) override;
 };

@@ -53,7 +53,7 @@ struct PipelineDependencies {
  * @brief 编排 perception → semantics → editing → physics → render 的逐帧管线。
  * @todo Phase3 支持多输入、多输出和可配置 DAG。
  */
-class Pipeline {
+class PHYSFX_API Pipeline {
  public:
   /** @brief 使用注入的模块创建管线。 @param dependencies 模块依赖集合。 */
   explicit Pipeline(PipelineDependencies dependencies);

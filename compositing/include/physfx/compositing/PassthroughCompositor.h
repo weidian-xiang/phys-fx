@@ -15,7 +15,7 @@
 namespace physfx::compositing {
 
 /** @brief Phase 1 直通合成器，原样返回输入帧。 @todo Phase2 替换为真实渲染器。 */
-class PassthroughCompositor final : public ICompositor {
+class PHYSFX_API PassthroughCompositor final : public ICompositor {
  public:
   core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                       const core::SimulationResult& simulation) override;

@@ -18,7 +18,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 更换实体材质的命令骨架。 */
-class ChangeMaterial final : public IEditCommand {
+class PHYSFX_API ChangeMaterial final : public IEditCommand {
  public:
   /** @brief 创建换材质命令。 @param entityId 实体编号。 @param material 目标材质。 */
   ChangeMaterial(std::uint64_t entityId, core::MaterialProperties material);

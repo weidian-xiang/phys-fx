@@ -21,7 +21,7 @@ namespace physfx::perception {
  * @return 当前帧相机位姿。
  * @todo Phase2 接入 COLMAP 思想或学习式 SLAM。
  */
-class ICameraTracker {
+class PHYSFX_API ICameraTracker {
  public:
   virtual ~ICameraTracker() = default;
   /**

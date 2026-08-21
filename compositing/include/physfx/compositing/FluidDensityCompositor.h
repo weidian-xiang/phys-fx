@@ -11,7 +11,7 @@
 namespace physfx::compositing {
 
 /** @brief 将烟雾/泼水密度场以屏幕空间精灵方式合成到 RGB 帧。 */
-class FluidDensityCompositor final : public ICompositor {
+class PHYSFX_API FluidDensityCompositor final : public ICompositor {
  public:
   core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                       const core::SimulationResult& simulation) override;

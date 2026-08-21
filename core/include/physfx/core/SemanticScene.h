@@ -75,7 +75,7 @@ enum class TimeOfDay { kOriginal, kDawn, kDay, kDusk, kNight };
 enum class Season { kOriginal, kSpring, kSummer, kAutumn, kWinter };
 
 /** @brief 语义场景契约，是理解、编辑、模拟和渲染共享的数据模型。 */
-struct SemanticScene {
+struct PHYSFX_API SemanticScene {
   std::vector<Entity> entities{};
   /** @brief 当前选中的实体编号；0 表示未选中。 */
   std::uint64_t selectedEntityId{0};

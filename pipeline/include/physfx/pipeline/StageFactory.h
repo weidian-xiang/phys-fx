@@ -17,7 +17,7 @@
 namespace physfx::pipeline {
 
 /** @brief 默认桩模块工厂。 @todo Phase2 根据配置选择真实后端。 */
-class StageFactory {
+class PHYSFX_API StageFactory {
  public:
   /** @brief 创建由桩实现组成的默认管线。 @return 可运行的管线。 */
   [[nodiscard]] static std::unique_ptr<Pipeline> createDefaultPipeline();

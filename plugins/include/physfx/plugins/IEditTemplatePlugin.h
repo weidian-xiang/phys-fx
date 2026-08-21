@@ -18,7 +18,7 @@
 namespace physfx::plugins {
 
 /** @brief 编辑模板插件标记接口；模板通过命令描述表达，不依赖 editing 实现。 */
-class IEditTemplatePlugin : public IEffectPlugin {
+class PHYSFX_API IEditTemplatePlugin : public IEffectPlugin {
  public:
   ~IEditTemplatePlugin() override = default;
   /** @brief 返回序列化编辑命令。 @return 命令描述列表。 */

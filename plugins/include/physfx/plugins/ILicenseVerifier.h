@@ -30,7 +30,7 @@ struct TemplatePackageManifest {
 };
 
 /** @brief 可选商业模板授权校验接口；开源核心不会强制调用。 */
-class ILicenseVerifier {
+class PHYSFX_API ILicenseVerifier {
  public:
   virtual ~ILicenseVerifier() = default;
   /**
@@ -44,7 +44,7 @@ class ILicenseVerifier {
 };
 
 /** @brief 开源核心的轻量包清单校验器。签名是信任标识，不是功能解锁。 */
-class TemplatePackageVerifier final : public ILicenseVerifier {
+class PHYSFX_API TemplatePackageVerifier final : public ILicenseVerifier {
  public:
   core::Status verify(const TemplatePackageManifest& manifest,
                       std::string_view licenseToken) const override;

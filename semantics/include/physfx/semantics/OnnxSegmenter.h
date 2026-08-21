@@ -18,7 +18,7 @@
 namespace physfx::semantics {
 
 /** @brief SAM 类 ONNX 首帧分割适配器；模型输入输出由模型卡片约定。 */
-class OnnxSegmenter final : public ISegmenter {
+class PHYSFX_API OnnxSegmenter final : public ISegmenter {
  public:
   explicit OnnxSegmenter(std::filesystem::path modelPath);
   ~OnnxSegmenter() override;

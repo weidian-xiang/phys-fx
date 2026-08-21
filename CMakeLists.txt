@@ -404,6 +404,10 @@ if(PHYSFX_BUILD_TESTS)
   target_link_libraries(physfx_phase7_quality_tests PRIVATE physfx_core physfx_editing)
   add_test(NAME phase7_quality_test COMMAND physfx_phase7_quality_tests)
 
+  add_executable(physfx_public_api_contract_tests tests/public_api_contract_test.cpp)
+  target_link_libraries(physfx_public_api_contract_tests PRIVATE physfx_pipeline physfx_cloud)
+  add_test(NAME public_api_contract_test COMMAND physfx_public_api_contract_tests)
+
   add_test(NAME cli_version_test COMMAND physfx --version)
   set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.6.0")
   add_test(NAME cli_empty_pipeline_test
@@ -423,6 +427,9 @@ if(PHYSFX_BUILD_TESTS)
   if(Python_Interpreter_FOUND)
     add_test(NAME copyright_header_test
       COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_copyright.py"
+              --root "${CMAKE_SOURCE_DIR}")
+    add_test(NAME public_api_audit_test
+      COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_public_api.py"
               --root "${CMAKE_SOURCE_DIR}")
     add_test(NAME taichi_bridge_fallback_test
       COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/taichi_bridge/smoke.py"

@@ -21,7 +21,7 @@ namespace physfx::perception {
  * @return 深度图。
  * @todo Phase2 接入 MiDaS 或 Depth-Anything。
  */
-class IDepthEstimator {
+class PHYSFX_API IDepthEstimator {
  public:
   virtual ~IDepthEstimator() = default;
   /**

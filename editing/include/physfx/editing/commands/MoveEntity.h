@@ -18,7 +18,7 @@
 namespace physfx::editing::commands {
 
 /** @brief 移动实体的命令骨架。 */
-class MoveEntity final : public IEditCommand {
+class PHYSFX_API MoveEntity final : public IEditCommand {
  public:
   /** @brief 创建移动命令。 @param entityId 实体编号。 @param target 目标位置。 */
   MoveEntity(std::uint64_t entityId, core::Vec3 target);

@@ -12,7 +12,7 @@
 namespace physfx::perception {
 
 /** @brief 天空二分类接口；输出值 1 表示天空像素。 */
-class ISkySegmenter {
+class PHYSFX_API ISkySegmenter {
  public:
   virtual ~ISkySegmenter() = default;
   virtual core::OcclusionMask segment(const core::Frame& frame) = 0;

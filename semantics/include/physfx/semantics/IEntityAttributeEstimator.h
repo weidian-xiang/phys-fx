@@ -17,7 +17,7 @@
 namespace physfx::semantics {
 
 /** @brief 实体类别、材质与边界属性估计器抽象接口。 */
-class IEntityAttributeEstimator {
+class PHYSFX_API IEntityAttributeEstimator {
  public:
   virtual ~IEntityAttributeEstimator() = default;
   /**

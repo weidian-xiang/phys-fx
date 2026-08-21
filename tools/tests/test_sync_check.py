@@ -41,3 +41,17 @@ def test_mirror_requires_same_commit(monkeypatch):
     result = sync_check.check_mirror("github", "master", "a" * 40)
     assert not result.ok
     assert "github/master" in result.message
+
+
+def test_tags_must_exist_on_origin_and_mirror(monkeypatch):
+    monkeypatch.setattr(sync_check, "local_tags", lambda: ({"v1.0.0": "abc"}, ""))
+    monkeypatch.setattr(
+        sync_check,
+        "remote_tags",
+        lambda remote: ({"v1.0.0": "abc"}, "") if remote == "origin" else ({}, ""),
+    )
+
+    result = sync_check.check_tags("origin", "github")
+
+    assert not result.ok
+    assert "github" in result.message

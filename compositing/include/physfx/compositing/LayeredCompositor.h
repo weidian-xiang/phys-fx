@@ -15,7 +15,7 @@
 namespace physfx::compositing {
 
 /** @brief 以掩码为图层、按当前轨迹偏移的 CPU 移动/复制合成基线。 */
-class LayeredCompositor final : public ICompositor {
+class PHYSFX_API LayeredCompositor final : public ICompositor {
  public:
   core::Frame compose(const core::Frame& frame, const core::SceneContext& scene,
                       const core::SimulationResult& simulation) override;

@@ -17,7 +17,7 @@
 namespace physfx::platform {
 
 /** @brief 基于 FFmpeg C API 的 RGB24 视频读取器。 */
-class FFmpegVideoReader final : public IVideoReader {
+class PHYSFX_API FFmpegVideoReader final : public IVideoReader {
  public:
   FFmpegVideoReader();
   ~FFmpegVideoReader() override;

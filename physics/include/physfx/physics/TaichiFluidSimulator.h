@@ -21,7 +21,7 @@ namespace physfx::physics {
  *
  * 本阶段不把 Taichi 加入 C++ 构建链；无 Python/Taichi 环境时返回可诊断状态。
  */
-class TaichiFluidSimulator final : public IPhysicsSimulator {
+class PHYSFX_API TaichiFluidSimulator final : public IPhysicsSimulator {
  public:
   core::Status initialize(const SimConfig& config) override;
   core::Result<core::SimulationResult> simulate(const core::Frame& frame,

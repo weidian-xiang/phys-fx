@@ -22,7 +22,7 @@
 namespace physfx::editing {
 
 /** @brief 可执行、可撤销、可序列化的编辑命令统一接口。 */
-class IEditCommand {
+class PHYSFX_API IEditCommand {
  public:
   virtual ~IEditCommand() = default;
   /** @brief 返回命令名称。 @return 稳定名称。 */

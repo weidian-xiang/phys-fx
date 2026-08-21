@@ -9,6 +9,7 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 from tools import release_checklist
 from tools.sync_check import CheckResult
@@ -133,3 +134,52 @@ def test_script_help_entrypoint_runs_from_repository_root():
 
     assert result.returncode == 0
     assert "PhysFX 阶段发布收尾检查单" in result.stdout
+
+
+def use_report(monkeypatch, path: Path, phase: int) -> None:
+    monkeypatch.setattr(release_checklist, "completion_report", lambda: path)
+    monkeypatch.setattr(release_checklist, "current_phase", lambda: phase)
+
+
+def test_pending_material_is_a_release_failure(monkeypatch, tmp_path):
+    report = tmp_path / "report.md"
+    report.write_text(
+        "RELEASE_URL=https://example.test/releases/v0.6.0\nMATERIAL_STATUS=pending\n",
+        encoding="utf-8",
+    )
+    use_report(monkeypatch, report, 7)
+
+    ok, message = release_checklist.check_release()
+
+    assert not ok
+    assert "pending" in message
+
+
+def test_phase8_requires_dual_release_urls(monkeypatch, tmp_path):
+    report = tmp_path / "report.md"
+    report.write_text(
+        "GITEE_RELEASE_URL=https://gitee.test/v1.0.0\nMATERIAL_STATUS=ready\n",
+        encoding="utf-8",
+    )
+    use_report(monkeypatch, report, 8)
+
+    ok, message = release_checklist.check_release()
+
+    assert not ok
+    assert "双平台" in message
+
+
+def test_phase8_accepts_ready_material_and_dual_releases(monkeypatch, tmp_path):
+    report = tmp_path / "report.md"
+    report.write_text(
+        "GITEE_RELEASE_URL=https://gitee.test/v1.0.0\n"
+        "GITHUB_RELEASE_URL=https://github.test/v1.0.0\n"
+        "MATERIAL_STATUS=ready\n",
+        encoding="utf-8",
+    )
+    use_report(monkeypatch, report, 8)
+
+    ok, message = release_checklist.check_release()
+
+    assert ok
+    assert "物料齐全" in message

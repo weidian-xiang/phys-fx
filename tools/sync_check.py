@@ -123,17 +123,25 @@ def remote_tags(remote: str) -> tuple[dict[str, str], str]:
     return tags, ""
 
 
-def check_tags(origin: str) -> CheckResult:
+def check_tags(origin: str, mirror: str = "") -> CheckResult:
     local, error = local_tags()
     if error:
         return CheckResult("标签", False, error)
-    remote, error = remote_tags(origin)
-    if error:
-        return CheckResult("标签", False, f"读取 {origin} 标签失败: {error}")
-    missing = sorted(name for name, object_id in local.items() if remote.get(name) != object_id)
-    if missing:
-        return CheckResult("标签", False, f"{origin} 缺少或不一致: {', '.join(missing)}")
-    return CheckResult("标签", True, f"本地 {len(local)} 个标签均存在于 {origin}")
+    remotes = [origin, *([mirror] if mirror else [])]
+    for remote_name in remotes:
+        remote, error = remote_tags(remote_name)
+        if error:
+            return CheckResult("标签", False, f"读取 {remote_name} 标签失败: {error}")
+        missing = sorted(
+            name for name, object_id in local.items() if remote.get(name) != object_id
+        )
+        if missing:
+            return CheckResult(
+                "标签", False, f"{remote_name} 缺少或不一致: {', '.join(missing)}"
+            )
+    return CheckResult(
+        "标签", True, f"本地 {len(local)} 个标签均存在于 {'、'.join(remotes)}"
+    )
 
 
 def check_mirror(mirror: str, branch: str, origin_head: str) -> CheckResult:
@@ -152,7 +160,7 @@ def check_mirror(mirror: str, branch: str, origin_head: str) -> CheckResult:
 def evaluate(origin: str, mirror: str, branch: str) -> list[CheckResult]:
     worktree = check_worktree()
     head, origin_head = check_head(origin, branch)
-    return [worktree, head, check_tags(origin), check_mirror(mirror, branch, origin_head)]
+    return [worktree, head, check_tags(origin, mirror), check_mirror(mirror, branch, origin_head)]
 
 
 def main() -> int:

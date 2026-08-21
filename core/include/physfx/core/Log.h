@@ -12,6 +12,8 @@
 
 #include <string_view>
 
+#include "physfx/core/Export.h"
+
 namespace physfx::core {
 
 /** @brief 日志级别。 @todo Phase2 支持结构化日志与可插拔 sink。 */
@@ -21,7 +23,7 @@ enum class LogLevel { kInfo, kWarning, kError };
  * @brief 轻量日志门面，Phase 1 输出到标准输出。
  * @todo Phase2 增加时间戳、线程信息和文件输出。
  */
-class Logger {
+class PHYSFX_API Logger {
  public:
   /** @brief 写入日志。 @param level 日志级别。 @param message 日志文本。 */
   static void log(LogLevel level, std::string_view message);

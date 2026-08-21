@@ -15,13 +15,13 @@
 namespace physfx::neural_render {
 
 /** @brief NeRF、3DGS 与生成式视频重渲染的统一抽象。 */
-class INeuralRenderer : public core::IRenderPath {
+class PHYSFX_API INeuralRenderer : public core::IRenderPath {
  public:
   ~INeuralRenderer() override = default;
 };
 
 /** @brief 原样返回输入帧的神经渲染桩。 */
-class PassthroughNeuralRenderer final : public INeuralRenderer {
+class PHYSFX_API PassthroughNeuralRenderer final : public INeuralRenderer {
  public:
   [[nodiscard]] std::string_view name() const noexcept override;
   core::Result<core::Frame> render(const core::Frame& frame, const core::SceneContext& scene,

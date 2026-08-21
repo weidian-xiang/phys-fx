@@ -26,7 +26,7 @@ namespace physfx::physics {
  * @return 当前帧模拟结果。
  * @todo Phase2 接入 Taichi，并预留 NVIDIA FleX 适配器。
  */
-class IPhysicsSimulator {
+class PHYSFX_API IPhysicsSimulator {
  public:
   virtual ~IPhysicsSimulator() = default;
   /**
@@ -48,7 +48,7 @@ class IPhysicsSimulator {
 };
 
 /** @brief Phase 1 空模拟器。 @todo Phase2 替换为真实物理后端。 */
-class MockSimulator final : public IPhysicsSimulator {
+class PHYSFX_API MockSimulator final : public IPhysicsSimulator {
  public:
   core::Status initialize(const SimConfig& config) override;
   core::Result<core::SimulationResult> simulate(const core::Frame& frame,

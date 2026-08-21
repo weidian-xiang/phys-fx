@@ -18,7 +18,7 @@
 namespace physfx::compositing {
 
 /** @brief 将物理合成器适配到统一渲染出口。 */
-class CompositingRenderPath final : public core::IRenderPath {
+class PHYSFX_API CompositingRenderPath final : public core::IRenderPath {
  public:
   /** @brief 创建物理合成路径。 @param compositor 合成器实现。 */
   explicit CompositingRenderPath(std::unique_ptr<ICompositor> compositor);
