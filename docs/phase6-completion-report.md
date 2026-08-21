@@ -1,6 +1,8 @@
 # Phase 6/6.1 完成报告
 
-CI_RUN_URL=NOT_YET_AVAILABLE
+CI_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32444480369
+CI_PUSH_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32444480369
+CI_PR_RUN_URL=NOT_YET_AVAILABLE
 RELEASE_URL=NOT_YET_AVAILABLE
 MATERIAL_STATUS=pending
 
@@ -33,11 +35,15 @@ SAM/XMem、ProPainter、Depth Anything 的冻结目标没有合格的固定 ONNX
 
 ## 验证结果
 
-- GUI ON：MinGW 构建成功，窗口合同自检通过；最终 CTest 结果在发布提交后记录。
-- GUI OFF：最终双构建结果在发布提交后记录。
-- Python、版权、格式、DCO 与远端证据在发布提交后记录。
+- GUI ON：MinGW 构建零项目警告，窗口合同自检通过，CTest 25/25 通过。
+- GUI OFF + Taichi 1.7.4：构建零项目警告，CTest 26/26 通过。
+- Python：pytest 17/17 通过；版权、clang-format、提交规范、DCO 和
+  `git diff --check` 均通过。
+- GitHub Actions push 运行 #6 全绿：`quality` 与 `optional-switches` 两个作业均成功。
 
 ## 远端证据
 
-远端提交、三标签、三版 Release 与 CI URL 仅在实际创建后写入本节；不以预期链接替代
-平台记录。
+- Gitee 与 GitHub `master` 均已同步到 `dc2702480db3a5d748900efd214e8010bc533a97`。
+- Gitee/GitHub 已存在 `v0.3.0`、`v0.4.0` 标签；`v0.5.0` 与三版 Release 在发布门禁
+  完成后补录，不以预期链接替代平台记录。
+- Push CI：<https://github.com/weidian-xiang/phys-fx/actions/runs/32444480369>。

@@ -16,7 +16,10 @@ PhysFX 采用单向镜像模型：Gitee 是唯一主仓库，GitHub 是只读镜
 | 镜像仓库 | [GitHub](https://github.com/weidian-xiang/phys-fx) | 用于公开可见性、跨平台拉取和镜像后的 Actions 验证 |
 
 GitHub 不承担开发主仓、发布主仓或问题追踪主仓的职责。贡献者应在 Gitee
-提交 Issue/PR；GitHub 上的讨论和 PR 不作为合并依据。
+提交 Issue/PR；GitHub 上的讨论和 PR 不作为合并依据。阶段门禁要求验证
+`pull_request` 事件时，可以为已从 Gitee 单向镜像的同名分支创建临时 GitHub PR，
+但它只用于触发 Actions：不得在 GitHub 合并、修改代码或创建发布，验证完成后关闭。
+对应改动仍须通过 Gitee PR 或维护者直推进入 `master`。
 
 ## Gitee 镜像配置
 
