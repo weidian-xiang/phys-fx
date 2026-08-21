@@ -11,7 +11,6 @@
 #include "physfx/pipeline/Pipeline.h"
 
 #include <chrono>
-#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string_view>
@@ -20,6 +19,7 @@
 #include "physfx/core/Log.h"
 #include "physfx/core/SemanticScene.h"
 #include "physfx/editing/CommandFactory.h"
+#include "physfx/editing/EditScript.h"
 #include "physfx/editing/commands/EmptyCommand.h"
 
 namespace physfx::pipeline {
@@ -35,30 +35,6 @@ void logStage(std::string_view stage, const Clock::time_point startedAt, std::st
   message << "stage=" << stage << " status=" << status
           << " elapsed_ms=" << static_cast<double>(elapsed.count()) / 1000.0;
   core::Logger::info(message.str());
-}
-
-std::vector<std::string> readScriptCommands(const std::string& path) {
-  std::ifstream stream(path);
-  if (!stream) return {};
-  const std::string text((std::istreambuf_iterator<char>(stream)),
-                         std::istreambuf_iterator<char>());
-  if (text.find("\"version\": 1") == std::string::npos &&
-      text.find("\"version\":1") == std::string::npos) {
-    return {};
-  }
-  std::vector<std::string> commands;
-  std::size_t cursor = 0;
-  while ((cursor = text.find('{', cursor)) != std::string::npos) {
-    const auto end = text.find('}', cursor);
-    if (end == std::string::npos) break;
-    const auto object = text.substr(cursor, end - cursor + 1U);
-    if (object.find("\"type\"") != std::string::npos) commands.push_back(object);
-    cursor = end + 1U;
-  }
-  if (commands.empty() && text.find("\"commands\"") != std::string::npos) {
-    commands.push_back(R"({"type":"empty"})");
-  }
-  return commands;
 }
 
 }  // namespace
@@ -189,20 +165,24 @@ bool Pipeline::run(const core::Config& config) {
               (config.seasonTarget.empty() ? std::string{"original"} : config.seasonTarget) +
               "\"}");
         }
+      } else if (config.editScriptPath.empty()) {
+        script = {R"({"type":"empty"})"};
       } else {
-        script = config.editScriptPath.empty() ? std::vector<std::string>{R"({"type":"empty"})"}
-                                               : readScriptCommands(config.editScriptPath);
-      }
-      if (script.empty() && !config.editScriptPath.empty()) {
-        core::Logger::error("stage=editing status=error reason=script_invalid");
-        return false;
+        auto parsedScript = editing::loadEditScript(config.editScriptPath);
+        if (!parsedScript.ok()) {
+          core::Logger::error("stage=editing status=error reason=script_invalid message=" +
+                              parsedScript.status().message);
+          return false;
+        }
+        script = std::move(parsedScript).value();
       }
       for (const auto& serialized : script) {
         auto command = editing::deserializeCommand(serialized);
         if (!command.ok() ||
             !dependencies_.editCommandStack->execute(std::move(command).value(), context.scene)
                  .ok()) {
-          core::Logger::error("stage=editing status=error reason=command_failed");
+          core::Logger::error(
+              "stage=editing status=error reason=command_failed message=命令执行失败；请检查实体编号与命令参数");
           return false;
         }
       }

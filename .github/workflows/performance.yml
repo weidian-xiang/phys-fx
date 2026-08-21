@@ -1,0 +1,24 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+# SPDX-License-Identifier: Apache-2.0
+
+name: PhysFX Performance Budget
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: 校验性能预算文件
+        run: python tools/check_perf_budget.py --baseline docs/perf-baseline.md

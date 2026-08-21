@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "physfx/editing/commands/AnimateParameter.h"
 #include "physfx/editing/commands/ChangeMaterial.h"
 #include "physfx/editing/commands/CopyEntity.h"
 #include "physfx/editing/commands/DeleteEntity.h"
@@ -28,6 +29,41 @@ namespace {
 core::Status missingEntity() { return {core::StatusCode::kNotFound, "实体不存在"}; }
 
 }  // namespace
+
+AnimateParameter::AnimateParameter(core::ParameterCurve curve) : curve_(std::move(curve)) {}
+std::string_view AnimateParameter::name() const noexcept { return "animate_parameter"; }
+core::Status AnimateParameter::execute(core::SemanticScene& scene) {
+  const auto existing = std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
+                                      [&](const auto& item) { return item.parameter == curve_.parameter; });
+  inserted_ = existing == scene.parameterCurves.end();
+  if (inserted_) scene.parameterCurves.push_back(curve_);
+  else {
+    previous_ = *existing;
+    *existing = curve_;
+  }
+  return core::Status::success();
+}
+core::Status AnimateParameter::undo(core::SemanticScene& scene) {
+  const auto existing = std::find_if(scene.parameterCurves.begin(), scene.parameterCurves.end(),
+                                      [&](const auto& item) { return item.parameter == curve_.parameter; });
+  if (existing == scene.parameterCurves.end()) {
+    return {core::StatusCode::kNotFound, "关键帧曲线不存在；请刷新工程状态后重试撤销"};
+  }
+  if (inserted_) scene.parameterCurves.erase(existing);
+  else if (previous_) *existing = *previous_;
+  else return {core::StatusCode::kInternalError, "关键帧命令尚未执行；请先执行命令再撤销"};
+  return core::Status::success();
+}
+std::string AnimateParameter::serialize() const {
+  std::string output = "{\"type\":\"animate_parameter\",\"parameter\":\"" + curve_.parameter +
+                       "\",\"interpolation\":\"" + curve_.interpolation + "\",\"keyframes\":[";
+  for (std::size_t index = 0; index < curve_.keyframes.size(); ++index) {
+    if (index != 0U) output += ',';
+    output += "{\"frame\":" + std::to_string(curve_.keyframes[index].frame) +
+              ",\"value\":" + std::to_string(curve_.keyframes[index].value) + "}";
+  }
+  return output + "]}";
+}
 
 std::string_view EmptyCommand::name() const noexcept { return "empty"; }
 core::Status EmptyCommand::execute(core::SemanticScene&) { return core::Status::success(); }

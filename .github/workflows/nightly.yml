@@ -1,0 +1,36 @@
+# PhysFX Engine —— 视频世界编辑器（Video World Editor）
+# Copyright (c) 2026 向伟典
+# SPDX-License-Identifier: Apache-2.0
+
+name: PhysFX Nightly Quality
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  asan-ubsan-fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: 安装测试工具
+        run: python -m pip install pytest
+      - name: 配置 ASAN/UBSAN
+        run: cmake -S . -B build/nightly -DPHYSFX_BUILD_TESTS=ON -DPHYSFX_BUILD_GUI=OFF -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+      - name: 构建
+        run: cmake --build build/nightly --parallel 2
+      - name: CTest
+        run: ctest --test-dir build/nightly --output-on-failure
+      - name: 解析器语料巡检
+        run: python tools/fuzz_json.py --iterations 1000
+      - name: Python 回归
+        run: PYTHONPATH="$PWD/bindings/python" python -m pytest -q tools/tests bindings/python/tests

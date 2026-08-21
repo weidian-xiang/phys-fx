@@ -42,3 +42,14 @@ ProPainter 权重。
   903.69 ms、泼水 1216.76 ms（均含运行时初始化），5,184 个输出全部有限且在 [0,1]。
 - 无 Taichi 环境仍运行同尺寸确定性 CPU 回退，并在 JSON 中写入
   `backend=cpu-fallback`，不会伪装成 Taichi。
+
+## Phase 7 性能预算与 GPU 路径
+
+CI CPU 门禁保持既有数值断言：点选掩码 P95 < 500 ms/帧、内存 < 4 GiB、GUI 预览 >= 15
+fps、参数调整后的半分辨率预览目标 < 300 ms、云端冷启动 < 30 s。单项相对基线回归超过 20% 发出警告，超过 50% 失败。GPU runner
+不存在时不伪造 GPU 数字，必须记录 `gpu=unavailable` 并执行同一 CPU 门禁。
+
+ONNX Runtime 的提供者探测顺序为 CUDA → DirectML → CPU；当前锁定的模型仍按
+`docs/model-cards.md` 永久限制，不会因为探测到 GPU 就宣称 SAM/XMem 已验收。预览采用
+半分辨率快速路径，确认后再排队全量渲染；GUI 的 `--benchmark` 结果是可重复的窗口合同，
+不是神经模型吞吐承诺。

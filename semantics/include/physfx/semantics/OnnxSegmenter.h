@@ -28,6 +28,7 @@ class OnnxSegmenter final : public ISegmenter {
   OnnxSegmenter& operator=(const OnnxSegmenter&) = delete;
 
   core::Result<std::vector<core::Entity>> segment(const core::Frame& frame) override;
+  [[nodiscard]] std::string executionProvider() const;
 
  private:
   struct Impl;

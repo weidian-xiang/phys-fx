@@ -2,7 +2,7 @@
 
 [![PhysFX CI](https://github.com/weidian-xiang/phys-fx/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/weidian-xiang/phys-fx/actions/workflows/ci.yml)
 
-当前版本：`v0.5.0`
+当前版本：`v0.6.0`
 
 PhysFX Engine 是面向短视频创作者和独立开发者的开源视频世界编辑器：把 AI 场景理解、语义编辑、物理特效和未来神经渲染统一到一条易扩展的管线中。
 核心引擎采用 Apache-2.0，复杂能力通过插件和模板封装，普通用户面对极简操作，开发者保留完整接口栈。

@@ -16,5 +16,7 @@ OpenGL 窗口 `physfx_gui`。GUI 工程由 `Project` 表示，包含输入/输�
 OpenGL 与 X11 开发包；`PHYSFX_BUILD_GUI=OFF` 不下载或编译任何窗口依赖。
 
 节点类型为 `source`、`perception`、`semantics`、`editing`、`physics`、`render`、`template`
-和 `output`。当前窗口实现线性/浅层节点编排；循环、条件、子图、多文档与曲线编辑不在
-Phase 6.1 范围内。
+和 `output`。窗口实现线性/浅层节点编排；循环、条件和子图仍不在范围内。Phase 7 增加
+关键帧曲线：移动轨迹与强度参数支持 `linear`/`smooth` 数值关键帧，参数改变先进入半
+分辨率快速预览，确认后切换完整渲染。曲线最终写入 `animate_parameter`，CLI 与 GUI 使用
+同一编辑脚本合同。

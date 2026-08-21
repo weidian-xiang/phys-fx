@@ -8,7 +8,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-project(PhysFX VERSION 0.5.0 LANGUAGES CXX)
+project(PhysFX VERSION 0.6.0 LANGUAGES CXX)
 
 option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
@@ -32,6 +32,7 @@ include(CTest)
 
 add_library(physfx_core STATIC
   core/src/Config.cpp
+  core/src/Json.cpp
   core/src/Log.cpp
   core/src/SceneGraph.cpp
   core/src/SemanticScene.cpp
@@ -88,6 +89,7 @@ add_library(physfx_editing STATIC
   editing/src/Commands.cpp
   editing/src/EditCommandStack.cpp
   editing/src/CommandFactory.cpp
+  editing/src/EditScript.cpp
 )
 target_include_directories(physfx_editing PUBLIC editing/include)
 target_link_libraries(physfx_editing PUBLIC physfx_core)
@@ -398,8 +400,12 @@ if(PHYSFX_BUILD_TESTS)
     PHYSFX_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
   add_test(NAME phase6_cloud_contract_test COMMAND physfx_phase6_cloud_contract_tests)
 
+  add_executable(physfx_phase7_quality_tests tests/phase7_quality_test.cpp)
+  target_link_libraries(physfx_phase7_quality_tests PRIVATE physfx_core physfx_editing)
+  add_test(NAME phase7_quality_test COMMAND physfx_phase7_quality_tests)
+
   add_test(NAME cli_version_test COMMAND physfx --version)
-  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.5.0")
+  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.6.0")
   add_test(NAME cli_empty_pipeline_test
            COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/empty_pipeline.json")
   set_tests_properties(cli_empty_pipeline_test PROPERTIES

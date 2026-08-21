@@ -29,6 +29,7 @@ class OnnxTracker final : public ITracker {
 
   core::Result<std::vector<core::Entity>> track(const core::Frame& frame,
                                                 const std::vector<core::Entity>& entities) override;
+  [[nodiscard]] std::string executionProvider() const;
 
  private:
   struct Impl;

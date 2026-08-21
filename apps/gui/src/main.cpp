@@ -40,6 +40,8 @@ struct EditorState {
   physfx::gui::PreviewWindow preview{};
   physfx::gui::Timeline timeline{};
   physfx::gui::CommandStackPanel commands{};
+  physfx::gui::PreviewScheduler previewScheduler{};
+  bool english{false};
   std::array<char, 512> inputPath{};
   std::array<char, 512> outputPath{};
   std::string status{"就绪"};
@@ -126,6 +128,7 @@ void addCommand(EditorState& state, std::string command) {
   state.commands.record(command);
   editing->commandJson.push_back(std::move(command));
   state.status = "命令已加入，可撤销或导出";
+  state.previewScheduler.markDirty();
 }
 
 bool exportScript(EditorState& state) {
@@ -184,9 +187,11 @@ void drawEditor(EditorState& state, GLuint previewTexture) {
                                      ImGuiWindowFlags_NoBringToFrontOnFocus;
   ImGui::Begin("PhysFX", nullptr, flags);
 
+  if (ImGui::Button(state.english ? "中文" : "English")) state.english = !state.english;
+  ImGui::SameLine();
   ImGui::TextUnformatted("PhysFX Engine");
   ImGui::SameLine();
-  ImGui::TextDisabled("0.5.0 | 本地编辑器");
+  ImGui::TextDisabled("0.6.0 | 本地编辑器");
   ImGui::Separator();
   ImGui::SetNextItemWidth(300.0F);
   ImGui::InputTextWithHint("##input", "输入视频路径", state.inputPath.data(),
@@ -203,7 +208,10 @@ void drawEditor(EditorState& state, GLuint previewTexture) {
   const float footer = 164.0F;
   const float sidebar = 285.0F;
   ImGui::BeginChild("preview", ImVec2(-sidebar - 8.0F, -footer), true);
-  ImGui::Text("预览  %.1f fps", ImGui::GetIO().Framerate);
+  ImGui::Text("%s  %.1f fps%s", state.english ? "Preview" : "预览", ImGui::GetIO().Framerate,
+              state.previewScheduler.quality() == physfx::gui::PreviewQuality::kQuickHalfResolution
+                  ? (state.english ? "  quick" : "  快速半分辨率")
+                  : "");
   const ImVec2 available = ImGui::GetContentRegionAvail();
   const float scale = std::min(available.x / kPreviewWidth, available.y / kPreviewHeight);
   const ImVec2 size(kPreviewWidth * scale, kPreviewHeight * scale);
@@ -232,6 +240,31 @@ void drawEditor(EditorState& state, GLuint previewTexture) {
     const float x = min.x + state.preview.selectedX() * scale;
     const float y = min.y + state.preview.selectedY() * scale;
     ImGui::GetWindowDrawList()->AddCircle(ImVec2(x, y), 9.0F, IM_COL32(255, 235, 90, 255), 0, 3.0F);
+  }
+  ImGui::EndChild();
+
+  ImGui::BeginChild("curves", ImVec2(0.0F, 132.0F), true);
+  ImGui::TextUnformatted(state.english ? "Keyframe curves" : "关键帧曲线");
+  if (state.project.curves.empty()) {
+    state.project.curves.push_back({"intensity", "linear", {{0U, 0.0F}, {299U, 1.0F}}});
+  }
+  auto& curve = state.project.curves.front();
+  ImGui::SameLine();
+  const char* modes[] = {"linear", "smooth"};
+  int mode = curve.interpolation == "smooth" ? 1 : 0;
+  if (ImGui::Combo("##curve-mode", &mode, modes, 2)) {
+    curve.interpolation = modes[mode];
+    state.previewScheduler.markDirty();
+  }
+  float values[2] = {curve.keyframes[0].value, curve.keyframes[1].value};
+  if (ImGui::SliderFloat2("##curve-values", values, 0.0F, 1.0F)) {
+    curve.keyframes[0].value = values[0];
+    curve.keyframes[1].value = values[1];
+    state.previewScheduler.markDirty();
+  }
+  if (state.previewScheduler.dirty()) {
+    ImGui::SameLine();
+    if (ImGui::Button(state.english ? "Render full" : "全量渲染")) state.previewScheduler.confirmFullRender();
   }
   ImGui::EndChild();
 

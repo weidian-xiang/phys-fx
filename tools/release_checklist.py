@@ -26,6 +26,16 @@ except ModuleNotFoundError:
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def completion_report() -> Path:
+    """Return the current phase report, retaining Phase 6 compatibility."""
+    phase7 = ROOT / "docs/phase7-completion-report.md"
+    return phase7 if phase7.exists() else ROOT / "docs/phase6-completion-report.md"
+
+
+def current_phase() -> int:
+    return 7 if (ROOT / "docs/phase7-completion-report.md").exists() else 6
+
+
 def run(*args: str) -> str:
     if not args or args[0] != "git":
         raise ValueError("release_checklist.run 只允许调用 git")
@@ -86,7 +96,7 @@ def check_tag() -> tuple[bool, str]:
 
 
 def check_ci() -> tuple[bool, str]:
-    report = ROOT / "docs/phase6-completion-report.md"
+    report = completion_report()
     report_text = report.read_text(encoding="utf-8") if report.exists() else ""
     match = re.search(r"^CI_RUN_URL=(https://\S+)$", report_text, re.MULTILINE)
     ok = bool(match) and "placeholder" not in match.group(1).lower()
@@ -94,7 +104,7 @@ def check_ci() -> tuple[bool, str]:
 
 
 def check_release() -> tuple[bool, str]:
-    report = ROOT / "docs/phase6-completion-report.md"
+    report = completion_report()
     text = report.read_text(encoding="utf-8") if report.exists() else ""
     release = re.search(r"^RELEASE_URL=(https://\S+)$", text, re.MULTILINE)
     material = re.search(r"^MATERIAL_STATUS=(ready|pending)$", text, re.MULTILINE)
@@ -112,7 +122,7 @@ def check_roadmap() -> tuple[bool, str]:
 
 
 def check_degradation() -> tuple[bool, str]:
-    report = ROOT / "docs/phase6-completion-report.md"
+    report = completion_report()
     text = report.read_text(encoding="utf-8") if report.exists() else ""
     ok = "降级" in text and "真实" in text
     return ok, "完成报告包含真实能力与降级清单" if ok else "缺少完成报告中的降级清单"
@@ -144,7 +154,7 @@ def main() -> int:
             ok, message = False, f"检查异常: {exc}"
         results.append({"name": name, "ok": ok, "message": message})
     if args.json:
-        print(json.dumps({"phase": 6, "checks": results, "all_green": all(item["ok"] for item in results)}, ensure_ascii=False, indent=2))
+        print(json.dumps({"phase": current_phase(), "checks": results, "all_green": all(item["ok"] for item in results)}, ensure_ascii=False, indent=2))
     else:
         for item in results:
             print(f"{'✅' if item['ok'] else '❌'} {item['name']}: {item['message']}")

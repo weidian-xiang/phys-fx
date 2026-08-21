@@ -20,7 +20,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "PhysFX Engine 0.5.0";
+constexpr const char* kVersion = "PhysFX Engine 0.6.0";
 
 void printHelp() {
   std::cout << "PhysFX Engine —— 视频世界编辑器\n"

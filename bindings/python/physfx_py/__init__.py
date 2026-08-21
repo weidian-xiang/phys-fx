@@ -11,7 +11,7 @@
 pybind11 扩展可选；未编译原生扩展时，纯 Python 门面保证工具链和示例可运行。
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 try:
     from ._physfx import version as _native_version

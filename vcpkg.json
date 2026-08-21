@@ -1,6 +1,6 @@
 {
   "name": "physfx",
-  "version-string": "0.5.0",
+  "version-string": "0.6.0",
   "description": "PhysFX 视频世界编辑器",
   "license": "Apache-2.0",
   "dependencies": [

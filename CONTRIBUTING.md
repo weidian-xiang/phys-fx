@@ -27,3 +27,7 @@ PR 接受审查和测试。仓库所有者/主维护者向伟典可将本人代�
 
 每个工作日结束前还必须运行 `python tools/sync_check.py`，确认工作区、Gitee `master`、
 本地标签和 GitHub 镜像全部同步。代码推送是日常备份动作，不受 Release 物料进度影响。
+
+第一次贡献优先选择标记为 `good first issue` 的文档、测试或小工具任务；先运行默认 CTest
+和 Python 测试，再在 PR 描述中贴出复现/验证命令。插件或模板贡献请先阅读
+[`docs/plugin-sdk.md`](docs/plugin-sdk.md)，确认没有路径穿越、凭据和未脱敏媒体。

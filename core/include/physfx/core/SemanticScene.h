@@ -33,6 +33,19 @@ struct EntityPose {
   Vec3 position{};
 };
 
+/** @brief 可序列化的数值关键帧。 */
+struct ParameterKeyframe {
+  std::uint64_t frame{0};
+  float value{0.0F};
+};
+
+/** @brief 参数时间曲线；插值为 linear 或 smooth。 */
+struct ParameterCurve {
+  std::string parameter{};
+  std::string interpolation{"linear"};
+  std::vector<ParameterKeyframe> keyframes{};
+};
+
 /** @brief 可编辑材质契约。 */
 struct MaterialProperties {
   std::string name{"default"};
@@ -69,6 +82,7 @@ struct SemanticScene {
   Weather weather{Weather::kOriginal};
   TimeOfDay timeOfDay{TimeOfDay::kOriginal};
   Season season{Season::kOriginal};
+  std::vector<ParameterCurve> parameterCurves{};
 
   /** @brief 按编号查找实体。 @param id 实体编号。 @return 实体指针，未找到时为空。 */
   [[nodiscard]] Entity* findEntity(std::uint64_t id) noexcept;

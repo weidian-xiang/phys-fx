@@ -2,6 +2,24 @@
 
 本文件遵循 Keep a Changelog，版本号遵循语义化版本规范。
 
+## [0.6.0] - 2026-08-21
+
+Phase 7 商业化深化、性能工程与产品化成熟度基线。
+
+### 新增
+
+- 质量工程：结构化 JSON 边界、编辑脚本/工程文件校验、fuzz 语料、nightly
+  ASAN/UBSAN 工作流、崩溃报告和错误诊断审计。
+- 默认关闭的 Stripe-compatible 沙箱订阅、幂等计费流水、对账和人工退款冲正。
+- CUDA -> DirectML -> CPU provider 探测、半分辨率预览分层、关键帧曲线编辑器。
+- 插件 SDK、Good First Issue 贡献入口和核心英文文档。
+
+### 限制
+
+- 正式支付仍依赖经营主体资质和商户号审批；功能开关默认关闭，沙箱不代表生产收款。
+- SAM/XMem/ProPainter/Depth Anything 继续遵循 `docs/model-cards.md` 的永久降级限制，
+  GPU provider 探测不改变模型验收结论。
+
 ## [0.5.0] - 2026-08-21
 
 ### 新增

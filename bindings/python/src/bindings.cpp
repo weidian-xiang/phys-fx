@@ -15,5 +15,5 @@ namespace py = pybind11;
 /** @brief 创建 PhysFX Python 扩展模块。 @todo Phase2 实现：暴露管线和核心数据类型。 */
 PYBIND11_MODULE(_physfx, module) {
   module.doc() = "PhysFX Engine Python 绑定骨架";
-  module.def("version", []() { return "0.5.0"; }, "返回 PhysFX Engine 版本号");
+  module.def("version", []() { return "0.6.0"; }, "返回 PhysFX Engine 版本号");
 }
