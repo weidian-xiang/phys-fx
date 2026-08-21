@@ -17,7 +17,10 @@ import re
 import sys
 from pathlib import Path
 
-from tools import sync_check
+try:
+    from tools import sync_check
+except ModuleNotFoundError:
+    import sync_check
 
 
 ROOT = Path(__file__).resolve().parents[1]

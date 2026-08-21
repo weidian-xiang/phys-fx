@@ -37,14 +37,15 @@ SAM/XMem、ProPainter、Depth Anything 的冻结目标没有合格的固定 ONNX
 
 - GUI ON：MinGW 构建零项目警告，窗口合同自检通过，CTest 25/25 通过。
 - GUI OFF + Taichi 1.7.4：构建零项目警告，CTest 26/26 通过。
-- Python：pytest 25/25 通过；版权、clang-format、提交规范、DCO 和
+- Python：pytest 26/26 通过；版权、clang-format、提交规范、DCO 和
   `git diff --check` 均通过。
 - GitHub Actions push 运行 #12 全绿：`quality` 与 `optional-switches` 两个作业均成功。
 - GitHub Actions PR 运行 #11 全绿，GitHub 验证 PR #1 已关闭且未在镜像仓合并。
 
 ## 远端证据
 
-- Gitee 与 GitHub `master` 均已同步到 `f418b82b801e54df2b1232aacb4b383d50bc417b`。
+- `v0.5.0` 指向已通过 push/PR CI 的 `f418b82b801e54df2b1232aacb4b383d50bc417b`；
+  Release 创建后另有只记录实际 URL 的证据提交，标签按发布合同保持不动。
 - Gitee/GitHub 已存在 `v0.3.0`、`v0.4.0`、`v0.5.0` 三个附注标签。
 - Push CI：<https://github.com/weidian-xiang/phys-fx/actions/runs/32446012488>。
 - PR CI：<https://github.com/weidian-xiang/phys-fx/actions/runs/32445703453>。

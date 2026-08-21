@@ -7,6 +7,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import subprocess
+import sys
+
 from tools import release_checklist
 from tools.sync_check import CheckResult
 
@@ -116,3 +119,17 @@ def test_sync_check_reports_execution_error(monkeypatch):
 
     assert not ok
     assert "network unavailable" in message
+
+
+def test_script_help_entrypoint_runs_from_repository_root():
+    result = subprocess.run(
+        [sys.executable, "tools/release_checklist.py", "--help"],
+        cwd=release_checklist.ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "PhysFX 阶段发布收尾检查单" in result.stdout
