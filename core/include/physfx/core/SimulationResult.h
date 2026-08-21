@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "physfx/core/Math.h"
@@ -41,6 +42,10 @@ struct ParticleSet {
 struct SimulationResult {
   ParticleSet particles{};
   std::size_t stepCount{0};
+  /** @brief 可选标量密度场（行主序），供烟雾/流体合成路径使用。 */
+  std::uint32_t densityWidth{0};
+  std::uint32_t densityHeight{0};
+  std::vector<float> density{};
 };
 
 }  // namespace physfx::core

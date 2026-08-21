@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "physfx/physics/IPhysicsSimulator.h"
 
 namespace physfx::physics {
@@ -23,11 +25,14 @@ class TaichiFluidSimulator final : public IPhysicsSimulator {
  public:
   core::Status initialize(const SimConfig& config) override;
   core::Result<core::SimulationResult> simulate(const core::Frame& frame,
-                                                 const core::SceneContext& scene) override;
+                                                const core::SceneContext& scene) override;
 
  private:
   SimConfig config_{};
   bool initialized_{false};
+  std::uint32_t width_{0};
+  std::uint32_t height_{0};
+  std::vector<float> density_{};
 };
 
 }  // namespace physfx::physics

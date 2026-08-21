@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""
+ * PhysFX Engine —— 视频世界编辑器（Video World Editor）
+ * Copyright (c) 2026 向伟典
+ *
+ * 本文件遵循 Apache License 2.0 开源协议，许可证全文见仓库根目录 LICENSE 文件。
+ * 按 Apache-2.0 要求，修改本文件的衍生版本须在文件中保留显著修改声明。
+ *
+ * SPDX-License-Identifier: Apache-2.0
+"""
+
+"""预推送占位钩子。
+
+同步检查需要在推送完成后比较 Gitee 与镜像，因此这里不阻塞推送；工作日结束前运行
+``python tools/sync_check.py`` 完成闭环。
+"""
+
+print("PhysFX: 推送完成后请运行 python tools/sync_check.py")

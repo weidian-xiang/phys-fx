@@ -21,6 +21,7 @@
 #include "physfx/editing/commands/EmptyCommand.h"
 #include "physfx/editing/commands/MoveEntity.h"
 #include "physfx/editing/commands/SelectEntity.h"
+#include "physfx/editing/commands/SetSeason.h"
 
 namespace physfx::editing {
 namespace {
@@ -56,8 +57,8 @@ std::string type(std::string_view json) {
   const auto position = json.find("\"type\"");
   if (position == std::string_view::npos) return {};
   const auto first = json.find('"', json.find(':', position) + 1);
-  const auto second = first == std::string_view::npos ? std::string_view::npos
-                                                       : json.find('"', first + 1);
+  const auto second =
+      first == std::string_view::npos ? std::string_view::npos : json.find('"', first + 1);
   return first == std::string_view::npos || second == std::string_view::npos
              ? std::string{}
              : std::string(json.substr(first + 1, second - first - 1));
@@ -68,11 +69,21 @@ std::string stringValue(std::string_view json, std::string_view key) {
   if (keyPosition == std::string_view::npos) return {};
   const auto colon = json.find(':', keyPosition);
   const auto first = json.find('"', colon == std::string_view::npos ? keyPosition : colon + 1);
-  const auto second = first == std::string_view::npos ? std::string_view::npos
-                                                       : json.find('"', first + 1);
+  const auto second =
+      first == std::string_view::npos ? std::string_view::npos : json.find('"', first + 1);
   return first == std::string_view::npos || second == std::string_view::npos
              ? std::string{}
              : std::string(json.substr(first + 1, second - first - 1));
+}
+
+std::optional<core::Season> seasonValue(std::string_view json) {
+  const auto value = stringValue(json, "season");
+  if (value == "spring") return core::Season::kSpring;
+  if (value == "summer") return core::Season::kSummer;
+  if (value == "autumn" || value == "fall") return core::Season::kAutumn;
+  if (value == "winter") return core::Season::kWinter;
+  if (value == "original") return core::Season::kOriginal;
+  return std::nullopt;
 }
 
 }  // namespace
@@ -91,10 +102,8 @@ core::Result<std::unique_ptr<IEditCommand>> deserializeCommand(std::string_view 
   if (commandType == "move_entity" && entityId) {
     const auto x = decimal(json, "x");
     const auto y = decimal(json, "y");
-    if (x && y) return boxed(std::make_unique<commands::MoveEntity>(*entityId, core::Vec3{
-                                                                         *x,
-                                                                         *y,
-                                                                         0.0F}));
+    if (x && y)
+      return boxed(std::make_unique<commands::MoveEntity>(*entityId, core::Vec3{*x, *y, 0.0F}));
   }
   if (commandType == "copy_entity" && entityId) {
     return boxed(std::make_unique<commands::CopyEntity>(*entityId));
@@ -102,11 +111,16 @@ core::Result<std::unique_ptr<IEditCommand>> deserializeCommand(std::string_view 
   if (commandType == "change_material" && entityId) {
     core::MaterialProperties material{};
     material.name = stringValue(json, "material");
-    if (material.name.empty()) return core::Status{core::StatusCode::kInvalidArgument, "外观命令缺少材质字段"};
+    if (material.name.empty())
+      return core::Status{core::StatusCode::kInvalidArgument, "外观命令缺少材质字段"};
     if (material.name == "red") material.baseColor = {1.0F, 0.15F, 0.1F};
     if (material.name == "blue") material.baseColor = {0.1F, 0.35F, 1.0F};
     if (material.name == "green") material.baseColor = {0.1F, 0.9F, 0.2F};
     return boxed(std::make_unique<commands::ChangeMaterial>(*entityId, std::move(material)));
+  }
+  if (commandType == "set_season") {
+    const auto season = seasonValue(json);
+    if (season) return boxed(std::make_unique<commands::SetSeason>(*season));
   }
   return core::Status{core::StatusCode::kInvalidArgument, "编辑命令 JSON 无效或缺少字段"};
 }

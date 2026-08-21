@@ -37,4 +37,7 @@ class BuiltInEditTemplate final : public IEditTemplatePlugin {
 /** @brief 注册 remove/move/smoke 三个编辑模板。 */
 bool registerBuiltInEditTemplates(PluginRegistry& registry);
 
+/** @brief 注册 Phase 5 模板三件套，不改变 Phase 4 注册函数的兼容数量。 */
+bool registerPhase5EditTemplates(PluginRegistry& registry);
+
 }  // namespace physfx::plugins

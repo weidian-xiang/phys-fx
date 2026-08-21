@@ -1,0 +1,2 @@
+# Phase 6 reference server intentionally uses only Python's standard library.
+# FastAPI/Redis adapters may be installed by a deployment profile later.

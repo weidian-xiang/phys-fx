@@ -8,17 +8,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 #include "physfx/editing/commands/ChangeMaterial.h"
 #include "physfx/editing/commands/CopyEntity.h"
 #include "physfx/editing/commands/DeleteEntity.h"
 #include "physfx/editing/commands/EmptyCommand.h"
 #include "physfx/editing/commands/MoveEntity.h"
+#include "physfx/editing/commands/SelectEntity.h"
+#include "physfx/editing/commands/SetSeason.h"
 #include "physfx/editing/commands/SetTimeOfDay.h"
 #include "physfx/editing/commands/SetWeather.h"
-#include "physfx/editing/commands/SelectEntity.h"
 
 namespace physfx::editing::commands {
 
@@ -52,8 +53,8 @@ core::Status MoveEntity::undo(core::SemanticScene& scene) {
 }
 std::string MoveEntity::serialize() const {
   return "{\"type\":\"move_entity\",\"entity_id\":" + std::to_string(entityId_) +
-         ",\"x\":" + std::to_string(target_.x) + ",\"y\":" +
-         std::to_string(target_.y) + ",\"z\":" + std::to_string(target_.z) + "}";
+         ",\"x\":" + std::to_string(target_.x) + ",\"y\":" + std::to_string(target_.y) +
+         ",\"z\":" + std::to_string(target_.z) + "}";
 }
 std::vector<std::uint64_t> MoveEntity::affectedEntityIds() const { return {entityId_}; }
 
@@ -94,8 +95,8 @@ core::Status ChangeMaterial::undo(core::SemanticScene& scene) {
   return core::Status::success();
 }
 std::string ChangeMaterial::serialize() const {
-  return "{\"type\":\"change_material\",\"entity_id\":" +
-         std::to_string(entityId_) + ",\"material\":\"" + target_.name + "\"}";
+  return "{\"type\":\"change_material\",\"entity_id\":" + std::to_string(entityId_) +
+         ",\"material\":\"" + target_.name + "\"}";
 }
 std::vector<std::uint64_t> ChangeMaterial::affectedEntityIds() const { return {entityId_}; }
 
@@ -177,5 +178,38 @@ core::Status SetTimeOfDay::undo(core::SemanticScene& scene) {
   return core::Status::success();
 }
 std::string SetTimeOfDay::serialize() const { return R"({"type":"set_time_of_day"})"; }
+
+SetSeason::SetSeason(core::Season season) : target_(season) {}
+std::string_view SetSeason::name() const noexcept { return "set_season"; }
+core::Status SetSeason::execute(core::SemanticScene& scene) {
+  previous_ = scene.season;
+  scene.season = target_;
+  return core::Status::success();
+}
+core::Status SetSeason::undo(core::SemanticScene& scene) {
+  if (!previous_) return {core::StatusCode::kInternalError, "命令尚未执行"};
+  scene.season = *previous_;
+  return core::Status::success();
+}
+std::string SetSeason::serialize() const {
+  const char* value = "original";
+  switch (target_) {
+    case core::Season::kSpring:
+      value = "spring";
+      break;
+    case core::Season::kSummer:
+      value = "summer";
+      break;
+    case core::Season::kAutumn:
+      value = "autumn";
+      break;
+    case core::Season::kWinter:
+      value = "winter";
+      break;
+    case core::Season::kOriginal:
+      break;
+  }
+  return std::string{"{\"type\":\"set_season\",\"season\":\""} + value + "\"}";
+}
 
 }  // namespace physfx::editing::commands

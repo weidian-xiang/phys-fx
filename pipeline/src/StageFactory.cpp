@@ -14,19 +14,22 @@
 #include <utility>
 
 #include "physfx/compositing/CompositingRenderPath.h"
+#include "physfx/compositing/FluidDensityCompositor.h"
 #include "physfx/compositing/LayeredCompositor.h"
 #include "physfx/compositing/PassthroughCompositor.h"
+#include "physfx/compositing/SeasonCompositor.h"
 #include "physfx/compositing/SpriteCompositor.h"
 #include "physfx/editing/EditCommandStack.h"
 #include "physfx/neural_render/INeuralRenderer.h"
 #include "physfx/neural_render/InpaintingRenderer.h"
+#include "physfx/perception/Phase5Estimators.h"
 #include "physfx/perception/StubEstimators.h"
 #include "physfx/physics/IPhysicsSimulator.h"
 #include "physfx/physics/SimpleParticleSystem.h"
 #include "physfx/physics/TaichiFluidSimulator.h"
 #include "physfx/platform/VideoIoFactory.h"
-#include "physfx/plugins/BuiltInEffectTemplates.h"
 #include "physfx/plugins/BuiltInEditTemplates.h"
+#include "physfx/plugins/BuiltInEffectTemplates.h"
 #include "physfx/plugins/PluginRegistry.h"
 #include "physfx/semantics/OnnxSegmenter.h"
 #include "physfx/semantics/OnnxTracker.h"
@@ -41,8 +44,8 @@ std::unique_ptr<Pipeline> StageFactory::createDefaultPipeline() {
 
 std::unique_ptr<Pipeline> StageFactory::createPipeline(const core::Config& config) {
   PipelineDependencies dependencies{};
-  dependencies.lightEstimator = std::make_unique<perception::StubLightEstimator>();
-  dependencies.depthEstimator = std::make_unique<perception::StubDepthEstimator>();
+  dependencies.lightEstimator = std::make_unique<perception::HeuristicLightEstimator>();
+  dependencies.depthEstimator = std::make_unique<perception::DepthAnythingEstimator>();
   dependencies.cameraTracker = std::make_unique<perception::StubCameraTracker>();
   dependencies.groundPlaneDetector = std::make_unique<perception::StubGroundPlaneDetector>();
   dependencies.occlusionEstimator = std::make_unique<perception::StubOcclusionEstimator>();
@@ -61,6 +64,8 @@ std::unique_ptr<Pipeline> StageFactory::createPipeline(const core::Config& confi
   dependencies.editCommandStack = std::make_unique<editing::EditCommandStack>();
   if (config.physicsBackend == "taichi_smoke") {
     dependencies.physicsSimulator = std::make_unique<physics::TaichiFluidSimulator>();
+    dependencies.physicsConfig.emitterPosition = config.editTarget;
+    dependencies.physicsConfig.particlePreset = physics::ParticlePreset::kSmoke;
   } else if (config.physicsBackend == "simple_particles") {
     dependencies.physicsSimulator = std::make_unique<physics::SimpleParticleSystem>();
     dependencies.physicsConfig.particlePreset = config.particlePreset == "smoke"
@@ -70,6 +75,7 @@ std::unique_ptr<Pipeline> StageFactory::createPipeline(const core::Config& confi
     dependencies.physicsConfig.emitterPosition = config.editTarget;
     plugins::PluginRegistry templateRegistry;
     plugins::registerBuiltInEditTemplates(templateRegistry);
+    plugins::registerPhase5EditTemplates(templateRegistry);
     if (plugins::registerBuiltInEffectTemplates(templateRegistry)) {
       const auto selected = std::dynamic_pointer_cast<plugins::BuiltInEffectTemplate>(
           templateRegistry.find(config.particlePreset));
@@ -81,7 +87,16 @@ std::unique_ptr<Pipeline> StageFactory::createPipeline(const core::Config& confi
   } else {
     dependencies.physicsSimulator = std::make_unique<physics::MockSimulator>();
   }
-  if (config.editOperation == "remove") {
+  if (config.editOperation == "season") {
+    dependencies.renderPath = std::make_unique<compositing::CompositingRenderPath>(
+        std::make_unique<compositing::SeasonCompositor>());
+  } else if (config.templateName == "splash" || config.templateName == "smoke") {
+    dependencies.renderPath = std::make_unique<compositing::CompositingRenderPath>(
+        std::make_unique<compositing::FluidDensityCompositor>());
+  } else if (config.templateName == "explode") {
+    dependencies.renderPath = std::make_unique<compositing::CompositingRenderPath>(
+        std::make_unique<compositing::SpriteCompositor>());
+  } else if (config.editOperation == "remove") {
     dependencies.renderPath = std::make_unique<neural_render::InpaintingRenderer>();
   } else if (config.editOperation == "move" || config.editOperation == "copy" ||
              config.editOperation == "appearance") {

@@ -22,7 +22,8 @@ core::Frame LayeredCompositor::compose(const core::Frame& frame, const core::Sce
                                        const core::SimulationResult&) {
   core::Frame output = frame;
   if (!scene.semanticScene || frame.format != core::PixelFormat::kRgb8) return output;
-  if (frame.pixels.size() < static_cast<std::size_t>(frame.width) * frame.height * 3U) return output;
+  if (frame.pixels.size() < static_cast<std::size_t>(frame.width) * frame.height * 3U)
+    return output;
   for (const auto& entity : scene.semanticScene->entities) {
     if (entity.deleted || entity.maskTimeline.empty() || entity.trajectory.empty()) continue;
     const auto& mask = entity.maskTimeline.back();
@@ -34,7 +35,7 @@ core::Frame LayeredCompositor::compose(const core::Frame& frame, const core::Sce
           if (index >= mask.values.size() || mask.values[index] == 0) continue;
           const auto offset = index * 3U;
           for (std::size_t channel = 0; channel < 3; ++channel) {
-            const float factor = channel == 0 ? entity.material.baseColor.x
+            const float factor = channel == 0   ? entity.material.baseColor.x
                                  : channel == 1 ? entity.material.baseColor.y
                                                 : entity.material.baseColor.z;
             output.pixels[offset + channel] = static_cast<std::uint8_t>(std::clamp(
@@ -70,28 +71,34 @@ core::Frame LayeredCompositor::compose(const core::Frame& frame, const core::Sce
         const auto sourceOffset = sourceIndex * 3U;
         std::array<int, 3> sum{};
         int samples = 0;
-        for (const auto& delta : std::array<std::pair<int, int>, 4>{{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}}) {
+        for (const auto& delta :
+             std::array<std::pair<int, int>, 4>{{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}}) {
           const int nx = static_cast<int>(x) + delta.first;
           const int ny = static_cast<int>(y) + delta.second;
           if (nx < 0 || ny < 0 || nx >= static_cast<int>(frame.width) ||
-              ny >= static_cast<int>(frame.height)) continue;
-          const auto neighbourIndex = static_cast<std::size_t>(ny) * frame.width +
-                                      static_cast<std::uint32_t>(nx);
+              ny >= static_cast<int>(frame.height))
+            continue;
+          const auto neighbourIndex =
+              static_cast<std::size_t>(ny) * frame.width + static_cast<std::uint32_t>(nx);
           if (neighbourIndex < mask.values.size() && mask.values[neighbourIndex] != 0) continue;
           const auto neighbourOffset = neighbourIndex * 3U;
-          for (std::size_t channel = 0; channel < 3; ++channel) sum[channel] += frame.pixels[neighbourOffset + channel];
+          for (std::size_t channel = 0; channel < 3; ++channel)
+            sum[channel] += frame.pixels[neighbourOffset + channel];
           ++samples;
         }
         if (samples > 0) {
           for (std::size_t channel = 0; channel < 3; ++channel)
-            output.pixels[sourceOffset + channel] = static_cast<std::uint8_t>(sum[channel] / samples);
+            output.pixels[sourceOffset + channel] =
+                static_cast<std::uint8_t>(sum[channel] / samples);
         }
         const int destinationX = static_cast<int>(x) + shiftX;
         const int destinationY = static_cast<int>(y) + shiftY;
         if (destinationX < 0 || destinationY < 0 || destinationX >= static_cast<int>(frame.width) ||
-            destinationY >= static_cast<int>(frame.height)) continue;
+            destinationY >= static_cast<int>(frame.height))
+          continue;
         const auto destinationOffset = (static_cast<std::size_t>(destinationY) * frame.width +
-                                        static_cast<std::uint32_t>(destinationX)) * 3U;
+                                        static_cast<std::uint32_t>(destinationX)) *
+                                       3U;
         for (std::size_t channel = 0; channel < 3; ++channel)
           output.pixels[destinationOffset + channel] = frame.pixels[sourceOffset + channel];
       }

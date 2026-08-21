@@ -58,6 +58,9 @@ enum class Weather { kOriginal, kClear, kRain, kSnow, kFog };
 /** @brief 场景时段枚举。 */
 enum class TimeOfDay { kOriginal, kDawn, kDay, kDusk, kNight };
 
+/** @brief 全局季节预设，用于换季节模板的可序列化场景状态。 */
+enum class Season { kOriginal, kSpring, kSummer, kAutumn, kWinter };
+
 /** @brief 语义场景契约，是理解、编辑、模拟和渲染共享的数据模型。 */
 struct SemanticScene {
   std::vector<Entity> entities{};
@@ -65,6 +68,7 @@ struct SemanticScene {
   std::uint64_t selectedEntityId{0};
   Weather weather{Weather::kOriginal};
   TimeOfDay timeOfDay{TimeOfDay::kOriginal};
+  Season season{Season::kOriginal};
 
   /** @brief 按编号查找实体。 @param id 实体编号。 @return 实体指针，未找到时为空。 */
   [[nodiscard]] Entity* findEntity(std::uint64_t id) noexcept;

@@ -46,17 +46,19 @@ core::Result<core::Frame> InpaintingRenderer::render(const core::Frame& frame,
           if (!masked(mask, x, y)) continue;
           std::array<int, 3> sum{};
           int samples = 0;
-          for (const auto& delta : std::array<std::pair<int, int>, 4>{{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}}) {
+          for (const auto& delta :
+               std::array<std::pair<int, int>, 4>{{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}}) {
             const int nx = static_cast<int>(x) + delta.first;
             const int ny = static_cast<int>(y) + delta.second;
             if (nx < 0 || ny < 0 || nx >= static_cast<int>(frame.width) ||
-                ny >= static_cast<int>(frame.height) || masked(mask, static_cast<std::uint32_t>(nx),
-                                                                static_cast<std::uint32_t>(ny))) {
+                ny >= static_cast<int>(frame.height) ||
+                masked(mask, static_cast<std::uint32_t>(nx), static_cast<std::uint32_t>(ny))) {
               continue;
             }
-            const auto offset = (static_cast<std::size_t>(ny) * frame.width +
-                                 static_cast<std::uint32_t>(nx)) * 3U;
-            for (std::size_t channel = 0; channel < 3; ++channel) sum[channel] += frame.pixels[offset + channel];
+            const auto offset =
+                (static_cast<std::size_t>(ny) * frame.width + static_cast<std::uint32_t>(nx)) * 3U;
+            for (std::size_t channel = 0; channel < 3; ++channel)
+              sum[channel] += frame.pixels[offset + channel];
             ++samples;
           }
           const auto outputOffset = (static_cast<std::size_t>(y) * frame.width + x) * 3U;
@@ -66,7 +68,8 @@ core::Result<core::Frame> InpaintingRenderer::render(const core::Frame& frame,
             output.pixels[outputOffset + 2U] = 0;
           } else {
             for (std::size_t channel = 0; channel < 3; ++channel)
-              output.pixels[outputOffset + channel] = static_cast<std::uint8_t>(sum[channel] / samples);
+              output.pixels[outputOffset + channel] =
+                  static_cast<std::uint8_t>(sum[channel] / samples);
           }
         }
       }

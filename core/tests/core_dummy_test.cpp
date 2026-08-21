@@ -34,7 +34,8 @@ int main() {
   assert(config.renderPath == physfx::core::RenderPathKind::kNeural);
   std::filesystem::remove(configPath);
 
-  const auto scriptConfigPath = std::filesystem::temp_directory_path() / "physfx_script_config.json";
+  const auto scriptConfigPath =
+      std::filesystem::temp_directory_path() / "physfx_script_config.json";
   {
     std::ofstream stream(scriptConfigPath);
     stream << R"({"edit_script":"scripts/remove.json"})";

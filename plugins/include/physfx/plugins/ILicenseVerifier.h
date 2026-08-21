@@ -24,6 +24,9 @@ struct TemplatePackageManifest {
   std::string publisher{};
   std::string signatureAlgorithm{};
   std::string signature{};
+  std::string engineVersion{};
+  std::string contentDigest{};
+  std::string publicKey{};
 };
 
 /** @brief 可选商业模板授权校验接口；开源核心不会强制调用。 */
@@ -38,6 +41,13 @@ class ILicenseVerifier {
    */
   virtual core::Status verify(const TemplatePackageManifest& manifest,
                               std::string_view licenseToken) const = 0;
+};
+
+/** @brief 开源核心的轻量包清单校验器。签名是信任标识，不是功能解锁。 */
+class TemplatePackageVerifier final : public ILicenseVerifier {
+ public:
+  core::Status verify(const TemplatePackageManifest& manifest,
+                      std::string_view licenseToken) const override;
 };
 
 }  // namespace physfx::plugins

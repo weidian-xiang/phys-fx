@@ -154,14 +154,15 @@ Config Config::fromFile(const std::filesystem::path& path) {
     const std::filesystem::path scriptPath(config.editScriptPath);
     if (scriptPath.is_relative()) {
       // 编辑脚本的相对路径始终相对于配置文件，避免 CTest/CLI 工作目录差异。
-      config.editScriptPath =
-          (configPath.parent_path() / scriptPath).lexically_normal().string();
+      config.editScriptPath = (configPath.parent_path() / scriptPath).lexically_normal().string();
     } else {
       config.editScriptPath = scriptPath.lexically_normal().string();
     }
   }
   config.editOperation = readString(text, "operation");
   config.appearanceName = readString(text, "material");
+  config.templateName = readString(text, "template");
+  config.seasonTarget = readString(text, "season");
   config.editTarget.x = static_cast<float>(readSizeInBlock(text, "editing", "target_x", 0));
   config.editTarget.y = static_cast<float>(readSizeInBlock(text, "editing", "target_y", 0));
   return config;

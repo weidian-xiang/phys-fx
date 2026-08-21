@@ -8,13 +8,15 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-project(PhysFX VERSION 0.3.0 LANGUAGES CXX)
+project(PhysFX VERSION 0.5.0 LANGUAGES CXX)
 
 option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
 option(PHYSFX_WITH_FFMPEG "启用 FFmpeg 动态视频 IO（需要 LGPL 开发包）" OFF)
 option(PHYSFX_WITH_ONNX "启用 ONNX Runtime 推理后端" OFF)
 option(PHYSFX_WITH_TAICHI "启用 Taichi 进程级流体桥接" OFF)
+option(PHYSFX_BUILD_GUI "构建 Dear ImGui/OpenGL 节点式编辑器" OFF)
+option(PHYSFX_GUI_FETCH_DEPS "下载锁定的 Dear ImGui/GLFW 源码" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +41,7 @@ target_compile_features(physfx_core PUBLIC cxx_std_20)
 
 add_library(physfx_perception STATIC
   perception/src/stub/StubEstimators.cpp
+  perception/src/heuristic/Phase5Estimators.cpp
 )
 target_include_directories(physfx_perception PUBLIC perception/include)
 target_link_libraries(physfx_perception PUBLIC physfx_core)
@@ -101,6 +104,8 @@ add_library(physfx_compositing STATIC
   compositing/src/PassthroughCompositor.cpp
   compositing/src/sprite/SpriteCompositor.cpp
   compositing/src/layered/LayeredCompositor.cpp
+  compositing/src/season/SeasonCompositor.cpp
+  compositing/src/season/FluidDensityCompositor.cpp
 )
 target_include_directories(physfx_compositing PUBLIC compositing/include)
 target_link_libraries(physfx_compositing PUBLIC physfx_core)
@@ -116,6 +121,7 @@ add_library(physfx_plugins STATIC
   plugins/src/PluginRegistry.cpp
   plugins/src/BuiltInEffectTemplates.cpp
   plugins/src/BuiltInEditTemplates.cpp
+  plugins/src/TemplatePackageVerifier.cpp
   plugins/examples/empty_effect/EmptyEffectPlugin.cpp
 )
 target_include_directories(physfx_plugins PUBLIC plugins/include)
@@ -195,9 +201,9 @@ else()
   target_compile_definitions(physfx_platform PRIVATE PHYSFX_FFMPEG_AVAILABLE=0)
 endif()
 
-add_library(physfx_cloud INTERFACE)
-target_include_directories(physfx_cloud INTERFACE cloud/include)
-target_link_libraries(physfx_cloud INTERFACE physfx_core)
+add_library(physfx_cloud STATIC cloud/src/LocalClients.cpp)
+target_include_directories(physfx_cloud PUBLIC cloud/include)
+target_link_libraries(physfx_cloud PUBLIC physfx_core)
 
 add_library(physfx_pipeline STATIC
   pipeline/src/Pipeline.cpp
@@ -239,6 +245,55 @@ endfunction()
 
 add_subdirectory(apps/cli)
 
+if(PHYSFX_BUILD_GUI)
+  include(FetchContent)
+  find_package(OpenGL REQUIRED)
+  if(PHYSFX_GUI_FETCH_DEPS)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(glfw
+      GIT_REPOSITORY https://github.com/glfw/glfw.git
+      GIT_TAG 3.4
+      GIT_SHALLOW TRUE)
+    FetchContent_Declare(imgui
+      GIT_REPOSITORY https://github.com/ocornut/imgui.git
+      GIT_TAG v1.90.9
+      GIT_SHALLOW TRUE)
+    FetchContent_MakeAvailable(glfw imgui)
+  else()
+    find_package(glfw3 CONFIG REQUIRED)
+    find_path(imgui_SOURCE_DIR imgui.cpp REQUIRED)
+  endif()
+
+  add_library(physfx_imgui STATIC
+    "${imgui_SOURCE_DIR}/imgui.cpp"
+    "${imgui_SOURCE_DIR}/imgui_demo.cpp"
+    "${imgui_SOURCE_DIR}/imgui_draw.cpp"
+    "${imgui_SOURCE_DIR}/imgui_tables.cpp"
+    "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
+    "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
+    "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
+  target_include_directories(physfx_imgui PUBLIC
+    "${imgui_SOURCE_DIR}" "${imgui_SOURCE_DIR}/backends")
+  target_link_libraries(physfx_imgui PUBLIC glfw OpenGL::GL)
+  if(MSVC)
+    target_compile_options(physfx_imgui PRIVATE /W0)
+    target_compile_options(glfw PRIVATE /W0)
+  else()
+    target_compile_options(physfx_imgui PRIVATE -w)
+    target_compile_options(glfw PRIVATE -w)
+  endif()
+
+  add_executable(physfx_gui
+    apps/gui/src/main.cpp
+    apps/gui/src/Project.cpp
+    apps/gui/src/EditorModel.cpp)
+  target_include_directories(physfx_gui PRIVATE apps/gui/src)
+  target_link_libraries(physfx_gui PRIVATE physfx_pipeline physfx_imgui)
+endif()
+
 if(PHYSFX_BUILD_TESTS)
   enable_testing()
   find_package(GTest CONFIG QUIET)
@@ -264,6 +319,12 @@ if(PHYSFX_BUILD_TESTS)
     semantics/tests/traditional_semantics_test.cpp)
   target_link_libraries(physfx_traditional_semantics_tests PRIVATE physfx_semantics)
   add_test(NAME traditional_semantics_test COMMAND physfx_traditional_semantics_tests)
+  add_executable(physfx_phase61_fallback_acceptance_tests
+    tests/phase61_fallback_acceptance_test.cpp)
+  target_link_libraries(physfx_phase61_fallback_acceptance_tests PRIVATE physfx_semantics)
+  add_test(NAME phase61_fallback_acceptance_test
+    COMMAND physfx_phase61_fallback_acceptance_tests)
+  set_tests_properties(phase61_fallback_acceptance_test PROPERTIES LABELS "needs_models")
   if(PHYSFX_ONNX_AVAILABLE)
     add_executable(physfx_onnx_runtime_tests semantics/tests/onnx_runtime_test.cpp)
     target_link_libraries(physfx_onnx_runtime_tests PRIVATE physfx_semantics)
@@ -317,9 +378,26 @@ if(PHYSFX_BUILD_TESTS)
   target_link_libraries(physfx_particle_occlusion_chain_tests PRIVATE
     physfx_semantics physfx_physics physfx_compositing)
   add_test(NAME particle_occlusion_chain_test COMMAND physfx_particle_occlusion_chain_tests)
+  add_executable(physfx_phase5_contract_tests
+    tests/phase5_contract_test.cpp
+    apps/gui/src/Project.cpp
+    apps/gui/src/EditorModel.cpp)
+  target_include_directories(physfx_phase5_contract_tests PRIVATE apps/gui/src)
+  target_link_libraries(physfx_phase5_contract_tests PRIVATE
+    physfx_editing physfx_physics physfx_plugins physfx_cloud)
+  add_test(NAME phase5_contract_test COMMAND physfx_phase5_contract_tests)
+  if(PHYSFX_BUILD_GUI)
+    add_test(NAME gui_window_contract_test COMMAND physfx_gui --self-test)
+  endif()
+
+  add_executable(physfx_phase6_cloud_contract_tests tests/phase6_cloud_contract_test.cpp)
+  target_link_libraries(physfx_phase6_cloud_contract_tests PRIVATE physfx_cloud)
+  target_compile_definitions(physfx_phase6_cloud_contract_tests PRIVATE
+    PHYSFX_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME phase6_cloud_contract_test COMMAND physfx_phase6_cloud_contract_tests)
 
   add_test(NAME cli_version_test COMMAND physfx --version)
-  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.3.0-dev")
+  set_tests_properties(cli_version_test PROPERTIES PASS_REGULAR_EXPRESSION "PhysFX Engine 0.5.0")
   add_test(NAME cli_empty_pipeline_test
            COMMAND physfx run --config "${CMAKE_SOURCE_DIR}/examples/empty_pipeline.json")
   set_tests_properties(cli_empty_pipeline_test PROPERTIES
@@ -338,6 +416,21 @@ if(PHYSFX_BUILD_TESTS)
     add_test(NAME copyright_header_test
       COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_copyright.py"
               --root "${CMAKE_SOURCE_DIR}")
+    add_test(NAME taichi_bridge_fallback_test
+      COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/taichi_bridge/smoke.py"
+              --output "${CMAKE_BINARY_DIR}/taichi-smoke.json" --steps 4)
+    if(PHYSFX_WITH_TAICHI)
+      add_test(NAME taichi_runtime_smoke_test
+        COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/taichi_bridge/smoke.py"
+                --output "${CMAKE_BINARY_DIR}/taichi-runtime-smoke.json"
+                --steps 30 --require-taichi)
+      add_test(NAME taichi_runtime_splash_test
+        COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/taichi_bridge/smoke.py"
+                --output "${CMAKE_BINARY_DIR}/taichi-runtime-splash.json"
+                --steps 30 --mode splash --require-taichi)
+      set_tests_properties(taichi_runtime_smoke_test taichi_runtime_splash_test
+        PROPERTIES LABELS "needs_taichi")
+    endif()
     if(PHYSFX_ONNX_AVAILABLE AND
        NOT (EXISTS "${CMAKE_SOURCE_DIR}/models/sam.onnx" AND
             EXISTS "${CMAKE_SOURCE_DIR}/models/xmem.onnx"))

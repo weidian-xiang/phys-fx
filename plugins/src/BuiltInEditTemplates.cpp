@@ -19,7 +19,9 @@ BuiltInEditTemplate::BuiltInEditTemplate(std::string id, std::string displayName
                                          std::vector<std::string> commands)
     : id_(std::move(id)), displayName_(std::move(displayName)), commands_(std::move(commands)) {}
 
-PluginMetadata BuiltInEditTemplate::metadata() const { return {id_, "0.3.0", PluginType::kEditTemplate}; }
+PluginMetadata BuiltInEditTemplate::metadata() const {
+  return {id_, "0.4.0", PluginType::kEditTemplate};
+}
 bool BuiltInEditTemplate::onLoad() { return true; }
 void BuiltInEditTemplate::onUnload() {}
 bool BuiltInEditTemplate::process(core::Frame&, const core::SceneContext&) { return true; }
@@ -32,6 +34,19 @@ bool registerBuiltInEditTemplates(PluginRegistry& registry) {
              "move", "一键移动", std::vector<std::string>{"select_entity", "move_entity"})) &&
          registry.registerPlugin(std::make_shared<BuiltInEditTemplate>(
              "smoke", "一键烟雾", std::vector<std::string>{"taichi_smoke", "occlusion_composite"}));
+}
+
+bool registerPhase5EditTemplates(PluginRegistry& registry) {
+  return registry.registerPlugin(std::make_shared<BuiltInEditTemplate>(
+             "splash", "泼水",
+             std::vector<std::string>{"depth_estimate", "taichi_splash", "occlusion_composite"})) &&
+         registry.registerPlugin(std::make_shared<BuiltInEditTemplate>(
+             "explode", "爆炸",
+             std::vector<std::string>{"particle_fire", "particle_fragments", "taichi_smoke",
+                                      "layered_composite"})) &&
+         registry.registerPlugin(std::make_shared<BuiltInEditTemplate>(
+             "season", "换季节",
+             std::vector<std::string>{"sky_segment", "set_season", "color_lighting_transform"}));
 }
 
 }  // namespace physfx::plugins

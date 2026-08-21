@@ -47,6 +47,10 @@ struct Config {
   std::string editOperation{};
   Vec3 editTarget{};
   std::string appearanceName{"edited"};
+  /** @brief Phase 5 模板入口（splash/explode/season）。 */
+  std::string templateName{};
+  std::string seasonTarget{"original"};
+  float effectScale{1.0F};
 
   /** @brief 从文件读取配置骨架。 @param path 配置文件路径。 @return 配置对象。 */
   [[nodiscard]] static Config fromFile(const std::filesystem::path& path);

@@ -7,7 +7,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 add_executable(physfx main.cpp)
-target_link_libraries(physfx PRIVATE physfx_pipeline)
+target_link_libraries(physfx PRIVATE physfx_pipeline physfx_cloud)
 target_compile_features(physfx PRIVATE cxx_std_20)
 physfx_deploy_optional_runtimes(physfx)
 

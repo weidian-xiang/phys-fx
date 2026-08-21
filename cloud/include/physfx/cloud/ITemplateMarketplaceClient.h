@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,9 @@ struct MarketplaceTemplate {
   std::string templateId{};
   std::string name{};
   std::string version{};
+  std::string publisher{};
+  std::string signatureStatus{};
+  std::filesystem::path packagePath{};
 };
 
 /** @brief 模板市场客户端接口；本阶段不提供实现和网络调用。 */
@@ -32,6 +36,22 @@ class ITemplateMarketplaceClient {
   virtual core::Result<std::vector<MarketplaceTemplate>> search(const std::string& keyword) = 0;
   /** @brief 获取模板清单。 @param templateId 模板编号。 @return 模板条目或错误状态。 */
   virtual core::Result<MarketplaceTemplate> describe(const std::string& templateId) = 0;
+  /** @brief 安装模板包；市场客户端只接受已认证包，未签名本地包仍可绕过市场加载。 */
+  virtual core::Status install(const std::string& templateId,
+                               const std::filesystem::path& destination) = 0;
+};
+
+/** @brief 从本地索引读取模板的离线市场客户端。 */
+class LocalTemplateMarketplaceClient final : public ITemplateMarketplaceClient {
+ public:
+  explicit LocalTemplateMarketplaceClient(std::filesystem::path root = {});
+  core::Result<std::vector<MarketplaceTemplate>> search(const std::string& keyword) override;
+  core::Result<MarketplaceTemplate> describe(const std::string& templateId) override;
+  core::Status install(const std::string& templateId,
+                       const std::filesystem::path& destination) override;
+
+ private:
+  std::filesystem::path root_{};
 };
 
 }  // namespace physfx::cloud

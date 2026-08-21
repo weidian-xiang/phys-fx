@@ -12,8 +12,8 @@
 #include <memory>
 
 #include "../examples/empty_effect/EmptyEffectPlugin.h"
-#include "physfx/plugins/BuiltInEffectTemplates.h"
 #include "physfx/plugins/BuiltInEditTemplates.h"
+#include "physfx/plugins/BuiltInEffectTemplates.h"
 #include "physfx/plugins/PluginRegistry.h"
 
 int main() {

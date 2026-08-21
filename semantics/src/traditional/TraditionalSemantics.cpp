@@ -18,6 +18,25 @@
 #include <utility>
 
 namespace physfx::semantics {
+namespace {
+
+float maskIou(const core::EntityMask& left, const core::EntityMask& right) {
+  if (left.width != right.width || left.height != right.height ||
+      left.values.size() != right.values.size()) {
+    return 0.0F;
+  }
+  std::size_t intersection = 0;
+  std::size_t unionCount = 0;
+  for (std::size_t index = 0; index < left.values.size(); ++index) {
+    const bool leftSet = left.values[index] != 0;
+    const bool rightSet = right.values[index] != 0;
+    intersection += leftSet && rightSet ? 1U : 0U;
+    unionCount += leftSet || rightSet ? 1U : 0U;
+  }
+  return unionCount == 0 ? 0.0F : static_cast<float>(intersection) / unionCount;
+}
+
+}  // namespace
 
 ColorPromptSegmenter::ColorPromptSegmenter(std::uint32_t x, std::uint32_t y, float tolerance)
     : x_(x), y_(y), tolerance_(std::max(tolerance, 0.0F)) {}
@@ -79,19 +98,28 @@ core::Result<std::vector<core::Entity>> CentroidTracker::track(
     const core::Frame& frame, const std::vector<core::Entity>& entities) {
   auto tracked = entities;
   for (auto& entity : tracked) {
-    const auto previous = std::find_if(previous_.begin(), previous_.end(),
-                                       [&](const auto& item) { return item.id == entity.id; });
-    const auto currentMasks = entity.maskTimeline;
+    auto previous = std::find_if(previous_.begin(), previous_.end(),
+                                 [&](const auto& item) { return item.id == entity.id; });
+    if (previous == previous_.end() && !entity.maskTimeline.empty()) {
+      float bestIou = 0.0F;
+      for (auto candidate = previous_.begin(); candidate != previous_.end(); ++candidate) {
+        if (candidate->maskTimeline.empty()) continue;
+        const float iou = maskIou(entity.maskTimeline.back(), candidate->maskTimeline.back());
+        if (iou > bestIou) {
+          bestIou = iou;
+          previous = candidate;
+        }
+      }
+      if (bestIou < 0.3F) previous = previous_.end();
+    }
     if (previous != previous_.end()) {
+      entity.id = previous->id;
       entity.trajectory = previous->trajectory;
-      entity.maskTimeline = previous->maskTimeline;
-      entity.maskTimeline.insert(entity.maskTimeline.end(), currentMasks.begin(),
-                                 currentMasks.end());
     }
     core::Vec3 center{};
     std::size_t count = 0;
-    if (!currentMasks.empty()) {
-      const auto& mask = currentMasks.back();
+    if (!entity.maskTimeline.empty()) {
+      const auto& mask = entity.maskTimeline.back();
       for (std::uint32_t y = 0; y < mask.height; ++y) {
         for (std::uint32_t x = 0; x < mask.width; ++x) {
           const auto offset = static_cast<std::size_t>(y) * mask.width + x;
@@ -110,6 +138,13 @@ core::Result<std::vector<core::Entity>> CentroidTracker::track(
     entity.trajectory.push_back({frame.index, center});
   }
   previous_ = tracked;
+  for (auto& entity : previous_) {
+    if (entity.maskTimeline.size() > 1U) {
+      auto latest = std::move(entity.maskTimeline.back());
+      entity.maskTimeline.clear();
+      entity.maskTimeline.push_back(std::move(latest));
+    }
+  }
   return tracked;
 }
 

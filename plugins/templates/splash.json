@@ -1,0 +1,8 @@
+{
+  "id": "splash",
+  "version": "0.4.0",
+  "display_name": "泼水",
+  "type": "edit_template",
+  "commands": ["depth_estimate", "taichi_splash", "occlusion_composite"],
+  "parameters": {"at": [320, 240], "intensity": 1.0}
+}

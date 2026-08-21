@@ -8,3 +8,4 @@
 *.7z binary
 *.pyd binary
 *.dll binary
+assets/skies/** binary

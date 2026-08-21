@@ -11,6 +11,6 @@ import physfx_py
 
 def test_version() -> None:
     """验证 Python 包骨架可以导入并返回版本号。"""
-    assert physfx_py.version() == "0.2.0-dev"
+    assert physfx_py.version() == "0.5.0"
     assert physfx_py.semantics.available()
     assert physfx_py.editing.available()

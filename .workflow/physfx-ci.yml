@@ -28,10 +28,12 @@ stages:
           - run: python3 tools/check_commit_msg.py --range ee6761e..HEAD
           - run: python3 tools/check_copyright.py --root .
           - run: git ls-files '*.h' '*.cpp' | xargs clang-format --dry-run --Werror
-          - run: cmake -S . -B build/off -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON
+          - run: cmake -S . -B build/off -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON -DPHYSFX_BUILD_GUI=OFF
           - run: cmake --build build/off --parallel 2
-          - run: ctest --test-dir build/off --output-on-failure -LE needs_models
+          - run: ctest --test-dir build/off --output-on-failure
           - run: python3 -m pytest -q tools/tests bindings/python/tests
+          - run: git remote get-url github || git remote add github https://github.com/weidian-xiang/phys-fx.git
+          - run: python3 tools/sync_check.py
 
   - name: optional
     displayName: 可选依赖构建

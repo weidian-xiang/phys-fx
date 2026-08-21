@@ -11,8 +11,8 @@
 #include <cassert>
 #include <memory>
 
-#include "physfx/editing/EditCommandStack.h"
 #include "physfx/editing/CommandFactory.h"
+#include "physfx/editing/EditCommandStack.h"
 #include "physfx/editing/commands/CopyEntity.h"
 #include "physfx/editing/commands/DeleteEntity.h"
 #include "physfx/editing/commands/EmptyCommand.h"
@@ -36,15 +36,15 @@ int main() {
   scene.entities.push_back({1, "person"});
   assert(stack.execute(std::make_unique<physfx::editing::commands::SelectEntity>(1), scene).ok());
   assert(scene.selectedEntityId == 1);
-  assert(stack.execute(std::make_unique<physfx::editing::commands::MoveEntity>(
+  assert(stack
+             .execute(std::make_unique<physfx::editing::commands::MoveEntity>(
                           1, physfx::core::Vec3{10.0F, 20.0F, 0.0F}),
                       scene)
              .ok());
   assert(scene.findEntity(1)->trajectory.back().position.x == 10.0F);
   assert(stack.undo(scene).ok());
   assert(stack.redo(scene).ok());
-  auto parsed = physfx::editing::deserializeCommand(
-      R"({"type":"delete_entity","entity_id":1})");
+  auto parsed = physfx::editing::deserializeCommand(R"({"type":"delete_entity","entity_id":1})");
   assert(parsed.ok());
   assert(stack.execute(std::move(parsed).value(), scene).ok());
   assert(scene.findEntity(1)->deleted);

@@ -24,3 +24,6 @@ Signed-off-by: 向伟典 <xwd752438081@163.com>
 `CHANGELOG.md` 的 `Unreleased` 段。外部贡献者不得直接推送 `master`，必须通过 Gitee
 PR 接受审查和测试。仓库所有者/主维护者向伟典可将本人代码直接推送到 `master`，无需
 自建 PR，但仍须遵守测试、提交规范和 DCO 要求。
+
+每个工作日结束前还必须运行 `python tools/sync_check.py`，确认工作区、Gitee `master`、
+本地标签和 GitHub 镜像全部同步。代码推送是日常备份动作，不受 Release 物料进度影响。

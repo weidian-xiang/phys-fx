@@ -35,6 +35,11 @@ struct SimConfig {
   float endSizePixels{1.0F};
   std::size_t maxParticles{10'000};
   std::uint64_t boundEntityId{0};
+  /** @brief 烟雾密度网格尺寸；默认低分辨率以控制 CPU 内存。 */
+  std::uint32_t gridWidth{96};
+  std::uint32_t gridHeight{54};
+  float dissipation{0.985F};
+  float buoyancy{0.35F};
 };
 
 }  // namespace physfx::physics

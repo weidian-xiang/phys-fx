@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "id": "sam-vit-base",
+      "filename": "sam.onnx",
+      "url": "",
+      "revision": "",
+      "sha256": "",
+      "status": "permanent-limitation"
+    },
+    {
+      "id": "xmem",
+      "filename": "xmem.onnx",
+      "url": "",
+      "revision": "",
+      "sha256": "",
+      "status": "permanent-limitation"
+    },
+    {
+      "id": "propainter",
+      "filename": "propainter.onnx",
+      "url": "",
+      "revision": "",
+      "sha256": "",
+      "status": "permanent-limitation"
+    },
+    {
+      "id": "depth-anything-small",
+      "filename": "depth-anything.onnx",
+      "url": "",
+      "revision": "",
+      "sha256": "",
+      "status": "permanent-limitation"
+    }
+  ]
+}

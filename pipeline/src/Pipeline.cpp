@@ -11,6 +11,7 @@
 #include "physfx/pipeline/Pipeline.h"
 
 #include <chrono>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string_view>
@@ -18,10 +19,8 @@
 
 #include "physfx/core/Log.h"
 #include "physfx/core/SemanticScene.h"
-#include "physfx/editing/commands/EmptyCommand.h"
 #include "physfx/editing/CommandFactory.h"
-
-#include <fstream>
+#include "physfx/editing/commands/EmptyCommand.h"
 
 namespace physfx::pipeline {
 
@@ -41,7 +40,8 @@ void logStage(std::string_view stage, const Clock::time_point startedAt, std::st
 std::vector<std::string> readScriptCommands(const std::string& path) {
   std::ifstream stream(path);
   if (!stream) return {};
-  const std::string text((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+  const std::string text((std::istreambuf_iterator<char>(stream)),
+                         std::istreambuf_iterator<char>());
   if (text.find("\"version\": 1") == std::string::npos &&
       text.find("\"version\":1") == std::string::npos) {
     return {};
@@ -163,33 +163,35 @@ bool Pipeline::run(const core::Config& config) {
       std::vector<std::string> script;
       if (!config.editOperation.empty()) {
         const auto entityId = config.boundEntityId == 0 ? 1 : config.boundEntityId;
-        script.push_back("{\"type\":\"select_entity\",\"entity_id\":" +
-                         std::to_string(entityId) + "}");
+        script.push_back("{\"type\":\"select_entity\",\"entity_id\":" + std::to_string(entityId) +
+                         "}");
         if (config.editOperation == "remove") {
-          script.push_back("{\"type\":\"delete_entity\",\"entity_id\":" +
-                           std::to_string(entityId) + "}");
+          script.push_back("{\"type\":\"delete_entity\",\"entity_id\":" + std::to_string(entityId) +
+                           "}");
         } else if (config.editOperation == "move" || config.editOperation == "copy" ||
                    config.editOperation == "appearance") {
           if (config.editOperation == "move") {
-            script.push_back("{\"type\":\"move_entity\",\"entity_id\":" +
-                             std::to_string(entityId) + ",\"x\":" +
-                             std::to_string(static_cast<std::uint64_t>(config.editTarget.x)) +
-                             ",\"y\":" +
-                             std::to_string(static_cast<std::uint64_t>(config.editTarget.y)) +
-                             "}");
+            script.push_back(
+                "{\"type\":\"move_entity\",\"entity_id\":" + std::to_string(entityId) +
+                ",\"x\":" + std::to_string(static_cast<std::uint64_t>(config.editTarget.x)) +
+                ",\"y\":" + std::to_string(static_cast<std::uint64_t>(config.editTarget.y)) + "}");
           } else if (config.editOperation == "copy") {
-            script.push_back("{\"type\":\"copy_entity\",\"entity_id\":" +
-                             std::to_string(entityId) + "}");
+            script.push_back("{\"type\":\"copy_entity\",\"entity_id\":" + std::to_string(entityId) +
+                             "}");
           } else {
-            script.push_back("{\"type\":\"change_material\",\"entity_id\":" +
-                             std::to_string(entityId) + ",\"material\":\"" +
-                             config.appearanceName + "\"}");
+            script.push_back(
+                "{\"type\":\"change_material\",\"entity_id\":" + std::to_string(entityId) +
+                ",\"material\":\"" + config.appearanceName + "\"}");
           }
+        } else if (config.editOperation == "season") {
+          script.push_back(
+              "{\"type\":\"set_season\",\"season\":\"" +
+              (config.seasonTarget.empty() ? std::string{"original"} : config.seasonTarget) +
+              "\"}");
         }
       } else {
-        script = config.editScriptPath.empty()
-                     ? std::vector<std::string>{R"({"type":"empty"})"}
-                     : readScriptCommands(config.editScriptPath);
+        script = config.editScriptPath.empty() ? std::vector<std::string>{R"({"type":"empty"})"}
+                                               : readScriptCommands(config.editScriptPath);
       }
       if (script.empty() && !config.editScriptPath.empty()) {
         core::Logger::error("stage=editing status=error reason=script_invalid");
@@ -197,9 +199,9 @@ bool Pipeline::run(const core::Config& config) {
       }
       for (const auto& serialized : script) {
         auto command = editing::deserializeCommand(serialized);
-        if (!command.ok() || !dependencies_.editCommandStack
-                                  ->execute(std::move(command).value(), context.scene)
-                                  .ok()) {
+        if (!command.ok() ||
+            !dependencies_.editCommandStack->execute(std::move(command).value(), context.scene)
+                 .ok()) {
           core::Logger::error("stage=editing status=error reason=command_failed");
           return false;
         }
