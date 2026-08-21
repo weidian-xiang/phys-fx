@@ -65,10 +65,14 @@ def check_changelog() -> tuple[bool, str]:
     return ok, "CHANGELOG 已有明确版本段" if ok else "CHANGELOG 仍有 Unreleased 段"
 
 
-def check_tag() -> tuple[bool, str]:
+def expected_tag() -> str:
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     match = re.search(r"project\(PhysFX VERSION ([^) ]+)", cmake)
-    expected = f"v{match.group(1)}" if match else ""
+    return f"v{match.group(1)}" if match else ""
+
+
+def check_tag() -> tuple[bool, str]:
+    expected = expected_tag()
     if not expected or expected not in run("git", "tag", "--list", expected).splitlines():
         return False, f"缺少版本标签 {expected or '未知'}"
     if run("git", "cat-file", "-t", expected) != "tag":

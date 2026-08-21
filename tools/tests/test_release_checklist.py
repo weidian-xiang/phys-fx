@@ -22,7 +22,12 @@ def tag_output(kind: str):
     return fake_run
 
 
+def use_version(monkeypatch, tag: str = "v-test"):
+    monkeypatch.setattr(release_checklist, "expected_tag", lambda: tag)
+
+
 def test_annotated_tag_may_precede_release_evidence_commit(monkeypatch):
+    use_version(monkeypatch, "v0.5.0")
     monkeypatch.setattr(release_checklist, "run", tag_output("tag"))
     monkeypatch.setattr(release_checklist, "run_status", lambda *args: True)
 
@@ -33,6 +38,7 @@ def test_annotated_tag_may_precede_release_evidence_commit(monkeypatch):
 
 
 def test_lightweight_release_tag_is_rejected(monkeypatch):
+    use_version(monkeypatch, "v0.5.0")
     monkeypatch.setattr(release_checklist, "run", tag_output("commit"))
 
     ok, message = release_checklist.check_tag()
@@ -42,6 +48,7 @@ def test_lightweight_release_tag_is_rejected(monkeypatch):
 
 
 def test_unrelated_release_tag_is_rejected(monkeypatch):
+    use_version(monkeypatch, "v0.5.0")
     monkeypatch.setattr(release_checklist, "run", tag_output("tag"))
     monkeypatch.setattr(release_checklist, "run_status", lambda *args: False)
 
@@ -49,6 +56,25 @@ def test_unrelated_release_tag_is_rejected(monkeypatch):
 
     assert not ok
     assert "不在当前 HEAD" in message
+
+
+def test_missing_expected_tag_is_rejected(monkeypatch):
+    use_version(monkeypatch)
+    monkeypatch.setattr(release_checklist, "run", lambda *args: "")
+
+    ok, message = release_checklist.check_tag()
+
+    assert not ok
+    assert "缺少版本标签 v-test" in message
+
+
+def test_unknown_project_version_is_rejected(monkeypatch):
+    use_version(monkeypatch, "")
+
+    ok, message = release_checklist.check_tag()
+
+    assert not ok
+    assert "缺少版本标签 未知" in message
 
 
 def test_sync_check_reuses_sync_module_api(monkeypatch):
@@ -65,3 +91,28 @@ def test_sync_check_reuses_sync_module_api(monkeypatch):
 
     assert ok
     assert "均已同步" in message
+
+
+def test_sync_check_aggregates_failures(monkeypatch):
+    monkeypatch.setattr(
+        release_checklist.sync_check,
+        "evaluate",
+        lambda *args: [CheckResult("镜像", False, "提交不一致")],
+    )
+
+    ok, message = release_checklist.check_sync()
+
+    assert not ok
+    assert message == "提交不一致"
+
+
+def test_sync_check_reports_execution_error(monkeypatch):
+    def fail(*args):
+        raise OSError("network unavailable")
+
+    monkeypatch.setattr(release_checklist.sync_check, "evaluate", fail)
+
+    ok, message = release_checklist.check_sync()
+
+    assert not ok
+    assert "network unavailable" in message
