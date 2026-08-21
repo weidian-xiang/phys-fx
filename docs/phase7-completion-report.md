@@ -5,7 +5,7 @@
 
 CI_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32454845418
 PERFORMANCE_RUN_URL=https://github.com/weidian-xiang/phys-fx/actions/runs/32454845613
-RELEASE_URL=PENDING
+RELEASE_URL=https://gitee.com/xiang-weidian/phys-fx/releases/tag/v0.6.0
 MATERIAL_STATUS=pending
 
 ## 基线核对
