@@ -17,5 +17,15 @@ def test_sha256_requires_exact_hex_digest():
     assert not download_models.valid_sha256("a" * 63)
 
 
-def test_unresolved_lock_is_rejected():
-    assert download_models.install_lock() == 2
+def test_incomplete_lock_record_is_rejected():
+    record = {
+        "id": "fixture",
+        "filename": "fixture.pth",
+        "url": "https://example.invalid/fixture.pth",
+        "revision": "fixture@deadbeef",
+        "sha256": "a" * 64,
+        "bytes": 1,
+        "format": "PyTorch checkpoint",
+        "license": "MIT",
+    }
+    assert download_models.validate_record(record) == "缺少 tensor_contract"

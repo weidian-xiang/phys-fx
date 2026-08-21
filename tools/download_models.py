@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import sys
 import urllib.request
 from pathlib import Path
@@ -36,12 +37,45 @@ def valid_sha256(value: object) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None
 
 
-def download(url: str, target: Path, expected: str) -> bool:
+def valid_positive_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def validate_record(record: object) -> str | None:
+    if not isinstance(record, dict):
+        return "记录不是对象"
+    for key in ("id", "filename", "url", "revision", "format", "license", "tensor_contract"):
+        if not isinstance(record.get(key), str) or not record[key].strip():
+            return f"缺少 {key}"
+    if Path(record["filename"]).name != record["filename"]:
+        return "filename 不得包含目录"
+    if not valid_sha256(record.get("sha256")):
+        return "sha256 不是 64 位十六进制值"
+    if not valid_positive_int(record.get("bytes")):
+        return "bytes 必须是正整数"
+    if not record["url"].startswith(("https://", "http://")):
+        return "url 必须是 HTTP(S) 地址"
+    return None
+
+
+def download(url: str, target: Path, expected: str, expected_bytes: int | None = None) -> bool:
     temporary = target.with_suffix(target.suffix + ".part")
     try:
-        urllib.request.urlretrieve(url, temporary)
-    except (OSError, ValueError) as exc:
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "PhysFX-model-fetch/1.0", "Accept": "application/octet-stream"},
+        )
+        with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as output:
+            shutil.copyfileobj(response, output, length=1024 * 1024)
+    except (OSError, ValueError, urllib.error.URLError) as exc:
         print(f"模型下载失败: {exc}; 可手动放置到 {target}", file=sys.stderr)
+        temporary.unlink(missing_ok=True)
+        return False
+    if expected_bytes is not None and temporary.stat().st_size != expected_bytes:
+        print(
+            f"模型大小不匹配: 期望 {expected_bytes}，实际 {temporary.stat().st_size}",
+            file=sys.stderr,
+        )
         temporary.unlink(missing_ok=True)
         return False
     actual = digest(temporary)
@@ -54,28 +88,34 @@ def download(url: str, target: Path, expected: str) -> bool:
     return True
 
 
-def install_lock() -> int:
+def install_lock(selected_ids: set[str] | None = None) -> int:
     try:
         payload = json.loads(LOCK_FILE.read_text(encoding="utf-8"))
         records = payload["models"]
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         print(f"模型锁文件无效: {exc}", file=sys.stderr)
         return 2
-    invalid = [record.get("id", "unknown") for record in records
-               if not valid_sha256(record.get("sha256")) or not record.get("revision")]
+    invalid = []
+    for record in records:
+        error = validate_record(record)
+        if error:
+            invalid.append(f"{record.get('id', 'unknown')}: {error}")
     if invalid:
         print("模型供应链未锁定，拒绝下载: " + ", ".join(invalid), file=sys.stderr)
-        print("必须先记录固定 revision、稳定下载 URL、64 位 SHA256 和许可审查结论。",
-              file=sys.stderr)
+        print("必须先记录固定 revision、官方下载 URL、文件大小、SHA256、许可和张量契约。", file=sys.stderr)
         return 2
     MODELS.mkdir(parents=True, exist_ok=True)
     for record in records:
+        if selected_ids is not None and record["id"] not in selected_ids:
+            continue
         target = MODELS / Path(record["filename"]).name
         expected = record["sha256"]
-        if target.exists() and digest(target).lower() == expected.lower():
+        expected_bytes = record["bytes"]
+        if (target.exists() and target.stat().st_size == expected_bytes and
+                digest(target).lower() == expected.lower()):
             print(f"模型已校验: {target} ({expected})")
             continue
-        if not download(record["url"], target, expected):
+        if not download(record["url"], target, expected, expected_bytes):
             return 1
     return 0
 
@@ -86,9 +126,11 @@ def main() -> int:
     parser.add_argument("--sha256", help="模型 SHA256")
     parser.add_argument("--name", default="model.onnx", help="保存文件名")
     parser.add_argument("--lock", action="store_true", help="按 docs/model-lock.json 下载全部锁定模型")
+    parser.add_argument("--model", action="append", dest="model_ids",
+                        help="只下载指定锁记录，可重复传入")
     args = parser.parse_args()
     if args.lock:
-        return install_lock()
+        return install_lock(set(args.model_ids) if args.model_ids else None)
     if Path(args.name).name != args.name:
         print("模型文件名不得包含目录", file=sys.stderr)
         return 2
