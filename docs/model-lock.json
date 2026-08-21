@@ -3,35 +3,55 @@
   "models": [
     {
       "id": "sam-vit-base",
-      "filename": "sam.onnx",
-      "url": "",
-      "revision": "",
-      "sha256": "",
-      "status": "permanent-limitation"
+      "filename": "sam-vit-base.pth",
+      "url": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth",
+      "revision": "facebookresearch/segment-anything@dca509fe793f601edb92606367a655c15ac00fdf",
+      "bytes": 375042383,
+      "sha256": "ec2df62732614e57411cdcf32a23ffdf28910380d03139ee0f4fcbe91eb8c912",
+      "format": "PyTorch state_dict checkpoint",
+      "license": "Apache-2.0",
+      "tensor_contract": "SAM ViT-B image encoder plus prompt mask decoder; native PyTorch checkpoint",
+      "source": "https://github.com/facebookresearch/segment-anything",
+      "status": "locked"
     },
     {
       "id": "xmem",
-      "filename": "xmem.onnx",
-      "url": "",
-      "revision": "",
-      "sha256": "",
-      "status": "permanent-limitation"
+      "filename": "xmem.pth",
+      "url": "https://api.github.com/repos/hkchengrex/XMem/releases/assets/70788989",
+      "revision": "hkchengrex/XMem@ec776eac6feaf59b4860678c3363ce7634e19c5e",
+      "bytes": 249026057,
+      "sha256": "27776291d2f0639b4e6b372a67651579b51180aa4d8f8f89bbff2dcc09ebf6f9",
+      "format": "PyTorch state_dict checkpoint",
+      "license": "MIT",
+      "tensor_contract": "XMem video object segmentation network with recurrent memory; native PyTorch checkpoint",
+      "source": "https://github.com/hkchengrex/XMem",
+      "status": "locked"
     },
     {
       "id": "propainter",
-      "filename": "propainter.onnx",
-      "url": "",
-      "revision": "",
-      "sha256": "",
-      "status": "permanent-limitation"
+      "filename": "propainter.pth",
+      "url": "https://api.github.com/repos/sczhou/ProPainter/releases/assets/124499582",
+      "revision": "sczhou/ProPainter@7b9d526c4657bc4384ef00d2c6d254516c5ca268",
+      "bytes": 157780510,
+      "sha256": "12c070c4b48f374c91d8a2a17851140b85c159621080989f9e191bbc18bd6591",
+      "format": "PyTorch state_dict checkpoint",
+      "license": "S-Lab License 1.0 (non-commercial)",
+      "tensor_contract": "ProPainter multi-stage video inpainting checkpoint; native PyTorch checkpoint",
+      "source": "https://github.com/sczhou/ProPainter",
+      "status": "locked-noncommercial"
     },
     {
-      "id": "depth-anything-small",
-      "filename": "depth-anything.onnx",
-      "url": "",
-      "revision": "",
-      "sha256": "",
-      "status": "permanent-limitation"
+      "id": "midas-dpt-swin2-tiny",
+      "filename": "midas-dpt-swin2-tiny-256.pt",
+      "url": "https://api.github.com/repos/isl-org/MiDaS/releases/assets/89330783",
+      "revision": "isl-org/MiDaS@1645b7e1675301fdfac03640738fe5a6531e17d6",
+      "bytes": 172162911,
+      "sha256": "0a859caa18be4bf9375e87dc6b684f6e83dc45b2dc13d8c8b89f6acb2a17a2c5",
+      "format": "PyTorch state_dict checkpoint",
+      "license": "MIT",
+      "tensor_contract": "MiDaS DPT Swin2 Tiny 256 monocular relative-depth model; native PyTorch state_dict checkpoint",
+      "source": "https://github.com/isl-org/MiDaS",
+      "status": "locked"
     }
   ]
 }

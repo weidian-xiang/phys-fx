@@ -32,8 +32,16 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - uses: actions/cache@v4
+        with:
+          path: models
+          key: physfx-models-${{ runner.os }}-${{ hashFiles('docs/model-lock.json') }}
       - name: 安装测试与格式工具
         run: python -m pip install pytest clang-format
+      - name: 安装 CPU PyTorch（needs_models）
+        run: python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+      - name: 下载并校验锁定模型（needs_models）
+        run: python tools/download_models.py --lock
       - name: 安装 GUI 构建依赖
         run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
       - name: 校验提交与 DCO
@@ -43,13 +51,13 @@ jobs:
       - name: 检查 C++ 格式
         shell: bash
         run: git ls-files '*.h' '*.cpp' | xargs clang-format --dry-run --Werror
-      - name: 默认零依赖构建（含可裁剪 GUI）
-        run: cmake -S . -B build/off -DFETCHCONTENT_BASE_DIR="$PWD/third_party/cache/gui" -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_BUILD_TESTS=ON -DPHYSFX_BUILD_GUI=ON
+      - name: 默认构建并启用真实模型门禁（含可裁剪 GUI）
+        run: cmake -S . -B build/off -DFETCHCONTENT_BASE_DIR="$PWD/third_party/cache/gui" -DPHYSFX_WITH_FFMPEG=OFF -DPHYSFX_WITH_ONNX=OFF -DPHYSFX_WITH_MODEL_TESTS=ON -DPHYSFX_BUILD_TESTS=ON -DPHYSFX_BUILD_GUI=ON
       - name: 编译
         run: cmake --build build/off --parallel 2
       - name: CTest
         run: ctest --test-dir build/off --output-on-failure
-      - name: 运行终局模型降级验收
+      - name: 运行 needs_models 真实权重验收
         run: ctest --test-dir build/off --output-on-failure -L needs_models
       - name: pytest
         run: PYTHONPATH="$PWD/bindings/python" python -m pytest -q tools/tests bindings/python/tests

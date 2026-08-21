@@ -1,20 +1,21 @@
 # 模型卡片与终局限制
 
-Phase 6 已冻结四个目标名称，但当时没有锁定导出提交、完整张量合同、稳定下载 URL、
-64 位 SHA256 或权重再分发结论。名称冻结不等于供应链锁定。`docs/model-lock.json` 将这一
-事实结构化记录；`python tools/download_models.py --lock` 会以退出码 2 拒绝下载，避免
-自动获取同名社区导出并冒充已审查模型。
+Phase 9 已将四个具体权重变体、官方下载地址、上游 revision、文件大小、SHA-256、格式、
+张量合同和许可证写入 `docs/model-lock.json`。`python tools/download_models.py --lock`
+只接受锁文件中的记录，并在使用前后同时校验文件大小与 SHA-256。GitHub Release 资产使用
+官方 API 下载端点，以避免普通 Release 直链在部分网络环境中超时。
 
-| 模型角色 | 冻结目标 | 终局结论 | 默认路径 |
+| 模型角色 | 锁定变体 | 许可证/格式 | 默认路径 |
 | --- | --- | --- | --- |
-| 首帧分割 | `facebook/sam-vit-base` ONNX | 上游没有单文件完整 encoder + prompt decoder 固定合同；无合格哈希 | 提示点颜色连通分割 |
-| 时序跟踪 | `hkchengrex/XMem` ONNX | 上游无稳定 CPU ONNX 循环状态合同及再分发审查 | 逐帧分割 + IoU 关联 |
-| 视频修复 | `sczhou/ProPainter` ONNX | 上游无稳定官方 ONNX 导出；多阶段时序合同未锁定 | CPU `InpaintingRenderer` |
-| 深度 | `DepthAnything` small ONNX | “small” 未对应到固定仓库 revision/导出和哈希 | 亮度 + 垂直先验相对深度 |
+| 首帧分割 | `facebookresearch/segment-anything` SAM ViT-B | Apache-2.0 / PyTorch checkpoint | 待真实推理适配完成；不存在时才允许传统回退 |
+| 时序跟踪 | `hkchengrex/XMem` 固定 Release asset `70788989` | MIT / PyTorch checkpoint | 待真实推理适配完成；不存在时才允许传统回退 |
+| 视频修复 | `sczhou/ProPainter` 固定 Release asset `124499582` | S-Lab License 1.0（非商业）/ PyTorch checkpoint | 待真实推理适配完成；不存在时才允许 CPU 回退 |
+| 深度 | `isl-org/MiDaS` DPT Swin2 Tiny 256 | MIT / PyTorch state_dict checkpoint | 待真实推理适配完成；不存在时才允许启发式回退 |
 
-以上四项按 Phase 6.1 终局条款永久标记为已知限制，不再以“下一阶段接入”表述。只有在
-独立安全审查明确修改本卡片、锁文件和 Release 限制时，产品能力声明才可改变；当前版本
-不得下载替代模型，不得运行 `OnnxSegmenter`/`OnnxTracker` 的装载桩冒充推理。
+四个权重已完成供应链锁定和本地文件校验，但这不等于推理链已验收。当前 C++
+`OnnxSegmenter`/`OnnxTracker` 只完成运行时装载，仍会明确返回 `notImplemented`；在适配
+输入输出合同并完成真实视频质量验收前，不得把模型加载或传统回退结果宣传为神经模型效果。
+ProPainter 的许可证禁止商业使用，未经维护者和上游许可证审查不得作为商业默认能力。
 
 ## 白名单验收边界
 

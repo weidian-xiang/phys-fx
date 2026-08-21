@@ -14,6 +14,7 @@ option(PHYSFX_BUILD_TESTS "构建 C++ 测试" ON)
 option(PHYSFX_BUILD_PYTHON "构建 Python 绑定骨架" OFF)
 option(PHYSFX_WITH_FFMPEG "启用 FFmpeg 动态视频 IO（需要 LGPL 开发包）" OFF)
 option(PHYSFX_WITH_ONNX "启用 ONNX Runtime 推理后端" OFF)
+option(PHYSFX_WITH_MODEL_TESTS "启用锁定 PyTorch 权重校验（需要模型文件与 PyTorch）" OFF)
 option(PHYSFX_WITH_TAICHI "启用 Taichi 进程级流体桥接" OFF)
 option(PHYSFX_BUILD_GUI "构建 Dear ImGui/OpenGL 节点式编辑器" OFF)
 option(PHYSFX_GUI_FETCH_DEPS "下载锁定的 Dear ImGui/GLFW 源码" ON)
@@ -446,13 +447,11 @@ if(PHYSFX_BUILD_TESTS)
       set_tests_properties(taichi_runtime_smoke_test taichi_runtime_splash_test
         PROPERTIES LABELS "needs_taichi")
     endif()
-    if(PHYSFX_ONNX_AVAILABLE AND
-       NOT (EXISTS "${CMAKE_SOURCE_DIR}/models/sam.onnx" AND
-            EXISTS "${CMAKE_SOURCE_DIR}/models/xmem.onnx"))
-      add_test(NAME onnx_model_smoke_test
-        COMMAND "${CMAKE_COMMAND}" -E echo "SKIP: 未发现经校验的 SAM/XMem 权重")
-      set_tests_properties(onnx_model_smoke_test PROPERTIES
-        LABELS "needs_models" SKIP_REGULAR_EXPRESSION "^SKIP:")
+    if(PHYSFX_WITH_MODEL_TESTS)
+      add_test(NAME model_checkpoint_smoke_test
+        COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_model_lock.py"
+                --root "${CMAKE_SOURCE_DIR}")
+      set_tests_properties(model_checkpoint_smoke_test PROPERTIES LABELS "needs_models")
     endif()
     if(PHYSFX_FFMPEG_AVAILABLE)
       find_program(PHYSFX_FFMPEG_EXECUTABLE NAMES ffmpeg

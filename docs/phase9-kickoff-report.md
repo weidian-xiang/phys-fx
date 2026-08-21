@@ -54,9 +54,10 @@ H.264/AAC，且包含 `AIGC Label=1` 元数据，来源为 HappyHorse-1.1-T2V。
 
 任务②仍有两个验收边界：
 
-1. `docs/model-lock.json` 中 SAM、XMem、ProPainter 和 Depth Anything 的 URL、revision、
-   SHA-256 均为空，状态均为 `permanent-limitation`；`python tools/download_models.py --lock`
-   因无可下载的锁定模型按设计退出 2。未经固定版本、许可和张量契约审查，不得自行替换权重。
+1. `docs/model-lock.json` 已锁定 SAM ViT-B、XMem、ProPainter 和 MiDaS DPT Swin2 Tiny 256 的
+   官方 URL、revision、文件大小、SHA-256、格式、许可证和张量合同；四个权重已在本地由
+   `tools/download_models.py --lock` 下载并校验。锁定与可载入不等于推理链验收，真实视频
+   仍必须通过任务②质量门槛。
 2. 当前没有一组覆盖人物/车辆/宠物或运动物体的三条真实实拍素材。当前 AI 生成输入仅用于
    本地技术验证；其生成提示词未随素材提供，项目不自行推断。
 

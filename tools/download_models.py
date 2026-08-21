@@ -17,6 +17,7 @@ import json
 import re
 import shutil
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -63,7 +64,10 @@ def download(url: str, target: Path, expected: str, expected_bytes: int | None =
     try:
         request = urllib.request.Request(
             url,
-            headers={"User-Agent": "PhysFX-model-fetch/1.0", "Accept": "application/octet-stream"},
+            headers={
+                "User-Agent": "PhysFX-model-fetch/1.0",
+                "Accept": "application/octet-stream",
+            },
         )
         with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as output:
             shutil.copyfileobj(response, output, length=1024 * 1024)
@@ -115,6 +119,7 @@ def install_lock(selected_ids: set[str] | None = None) -> int:
                 digest(target).lower() == expected.lower()):
             print(f"模型已校验: {target} ({expected})")
             continue
+        print(f"准备下载 {record['id']} revision={record['revision']} format={record['format']}")
         if not download(record["url"], target, expected, expected_bytes):
             return 1
     return 0

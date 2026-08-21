@@ -41,7 +41,9 @@ Phase 6 的商业入口采用本地优先原则：单机云服务参考实现提
 
 - `docs/phase9-kickoff-report.md` 已登记远端、CI、Release、支付和物料门禁的可复核状态。
 - 已进入任务②：Gitee `v0.6.0` 正文已修复，GitHub `v0.6.0` Release 待补建；本阶段先推进本地真实权重管线。
-- `docs/model-lock.json` 的四个模型仍无 URL、revision 或 SHA-256，真实模型任务未启动。
+- `docs/model-lock.json` 已锁定四个具体 PyTorch 权重变体及 URL、revision、大小与 SHA-256；
+  本地 `needs_models` 门禁已完成四个 checkpoint 的哈希与 PyTorch 载入验证，视频推理适配
+  仍未完成。
 - 三段本地输入已到位，但均为 HappyHorse-1.1-T2V AI 生成测试素材，不是实拍；只能用于技术验证，
   不能替代真实素材核心完工证据。
 - Phase 9 只执行基线清零、真实效果、演示复现和 `v1.0.0` 发布，不开启其他方向。
