@@ -14,41 +14,35 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+from tools import sync_check
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(*args: str) -> str:
-    result = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, check=False)
+    if not args or args[0] != "git":
+        raise ValueError("release_checklist.run 只允许调用 git")
+    result = sync_check.git(*args[1:])
     return result.stdout.strip()
 
 
 def run_status(*args: str) -> bool:
-    return subprocess.run(
-        args, cwd=ROOT, capture_output=True, text=True, check=False
-    ).returncode == 0
+    if not args or args[0] != "git":
+        raise ValueError("release_checklist.run_status 只允许调用 git")
+    return sync_check.git(*args[1:]).returncode == 0
 
 
 def check_sync() -> tuple[bool, str]:
-    result = subprocess.run(
-        [sys.executable, str(ROOT / "tools" / "sync_check.py"), "--json"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
     try:
-        payload = json.loads(result.stdout)
-        failures = [item["message"] for item in payload["checks"] if not item["ok"]]
-    except (json.JSONDecodeError, KeyError, TypeError):
-        return False, result.stderr.strip() or "sync_check.py 未返回有效 JSON"
-    if result.returncode != 0 or not payload.get("all_green", False):
+        results = sync_check.evaluate("origin", "github", "master")
+    except (OSError, sync_check.subprocess.TimeoutExpired) as exc:
+        return False, f"同步检查异常: {exc}"
+    failures = [item.message for item in results if not item.ok]
+    if failures:
         return False, "；".join(failures) or "远端同步检查失败"
     return True, "工作区、Gitee、标签和 GitHub 镜像均已同步"
 

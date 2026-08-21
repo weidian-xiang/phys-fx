@@ -8,6 +8,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from tools import release_checklist
+from tools.sync_check import CheckResult
 
 
 def tag_output(kind: str):
@@ -48,3 +49,19 @@ def test_unrelated_release_tag_is_rejected(monkeypatch):
 
     assert not ok
     assert "不在当前 HEAD" in message
+
+
+def test_sync_check_reuses_sync_module_api(monkeypatch):
+    monkeypatch.setattr(
+        release_checklist.sync_check,
+        "evaluate",
+        lambda *args: [
+            CheckResult("工作区", True, "干净"),
+            CheckResult("镜像", True, "已同步"),
+        ],
+    )
+
+    ok, message = release_checklist.check_sync()
+
+    assert ok
+    assert "均已同步" in message
