@@ -24,7 +24,7 @@ MATERIAL_STATUS=pending
 - 模型终局路径：三类 1280×720/30fps/10 秒高对比素材，共 900 帧，提示分割 + IoU
   关联最小 IoU 1.0、最慢 6.90 ms/帧、轨迹 900/900 连续。
 
-## 永久已知限制与商业影响
+## 永久降级、已知限制与商业影响
 
 SAM/XMem、ProPainter、Depth Anything 的冻结目标没有合格的固定 ONNX 导出、张量合同、
 64 位 SHA256 和许可结论，`download_models.py --lock` 会拒绝下载。`v0.5.0` 永久采用
