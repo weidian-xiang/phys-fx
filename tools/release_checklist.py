@@ -27,6 +27,12 @@ def run(*args: str) -> str:
     return result.stdout.strip()
 
 
+def run_status(*args: str) -> bool:
+    return subprocess.run(
+        args, cwd=ROOT, capture_output=True, text=True, check=False
+    ).returncode == 0
+
+
 def check_sync() -> tuple[bool, str]:
     result = subprocess.run(
         [sys.executable, str(ROOT / "tools" / "sync_check.py"), "--json"],
@@ -66,12 +72,16 @@ def check_changelog() -> tuple[bool, str]:
 
 
 def check_tag() -> tuple[bool, str]:
-    tags = run("git", "tag", "--points-at", "HEAD").splitlines()
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     match = re.search(r"project\(PhysFX VERSION ([^) ]+)", cmake)
     expected = f"v{match.group(1)}" if match else ""
-    ok = expected in tags
-    return ok, f"HEAD 标签: {', '.join(tags) or '无'}；需要 {expected}"
+    if not expected or expected not in run("git", "tag", "--list", expected).splitlines():
+        return False, f"缺少版本标签 {expected or '未知'}"
+    if run("git", "cat-file", "-t", expected) != "tag":
+        return False, f"{expected} 不是附注标签"
+    if not run_status("git", "merge-base", "--is-ancestor", expected, "HEAD"):
+        return False, f"{expected} 不在当前 HEAD 的发布历史中"
+    return True, f"附注标签 {expected} 位于当前发布历史中"
 
 
 def check_ci() -> tuple[bool, str]:

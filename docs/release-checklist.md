@@ -9,7 +9,8 @@
 1. 工作区干净，`origin/master` 包含当前 HEAD。
 2. CMake、Python 包和 README 版本一致。
 3. `CHANGELOG.md` 没有 `Unreleased` 残留。
-4. 附注标签已推送并指向正确提交（Phase 6 为 `v0.5.0`）。
+4. 附注标签已推送且位于当前发布历史中（Phase 6 为 `v0.5.0`）。Release 创建后允许
+   追加一笔只记录实际 URL 的证据提交，标签无需也不得为此移动。
 5. Gitee Release 已创建并写入完成报告；演示物料允许标记“物料补充中”后续编辑，
    不阻塞基础 Release、标签和代码推送。
 6. CI 最新运行全绿；运行 URL 写入完成报告。
