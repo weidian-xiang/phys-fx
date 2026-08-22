@@ -65,7 +65,7 @@ def load_masks(path: Path, expected_frames: int, height: int, width: int) -> np.
         raise AssertionError(
             f"实体掩码尺寸错误: 期望={(expected_frames, height, width)} 实际={masks.shape}"
         )
-    return masks.astype(bool)
+    return masks > 0.5
 
 
 def load_alpha(path: Path, expected_frames: int, height: int, width: int) -> np.ndarray:
@@ -185,7 +185,8 @@ def main() -> int:
     if args.manifest is None:
         parser.error("真实成片检查必须提供 --manifest")
     payload = json.loads(args.manifest.read_text(encoding="utf-8"))
-    results = [check_case(record, args.ffmpeg, args.ffprobe) for record in payload["cases"]]
+    records = payload if isinstance(payload, list) else payload["cases"]
+    results = [check_case(record, args.ffmpeg, args.ffprobe) for record in records]
     print(json.dumps(results, ensure_ascii=False, indent=2))
     return 0
 
