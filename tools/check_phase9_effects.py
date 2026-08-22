@@ -98,6 +98,18 @@ def check_case(record: dict[str, object], ffmpeg: str, ffprobe: str) -> dict[str
     before = [item[:, :source_width] for item in source_frames]
     after = [item[:, source_width + 6:source_width * 2 + 6] for item in source_frames]
     masks = load_masks(Path(str(record["masks"])), len(before), source_height, source_width)
+    tracked_masks = masks[int(record["xmem_seed_frame"]):]
+    if not len(tracked_masks):
+        raise AssertionError("没有可校验的跟踪实体掩码")
+    mask_area_ratio_max = float(tracked_masks.mean(axis=(1, 2)).max())
+    recorded_mask_area_ratio_max = float(record["mask_area_ratio_max"])
+    if abs(mask_area_ratio_max - recorded_mask_area_ratio_max) > 1e-6:
+        raise AssertionError(
+            f"实体掩码覆盖率记录不一致: 记录={recorded_mask_area_ratio_max:.6f} "
+            f"实际={mask_area_ratio_max:.6f}"
+        )
+    if mask_area_ratio_max > 0.60:
+        raise AssertionError(f"实体掩码覆盖画面过大: {mask_area_ratio_max:.6f} > 0.600000")
 
     region = record.get("effect_region", [0, 0, source_width, source_height])
     left, top, right, bottom = (int(value) for value in region)
@@ -148,6 +160,7 @@ def check_case(record: dict[str, object], ffmpeg: str, ffprobe: str) -> dict[str
         "sampled_effect_frame_delta": differences,
         "max_effect_frame_delta": max(differences, default=0.0),
         "max_masked_effect_pixels": max(masked_contributions, default=0),
+        "mask_area_ratio_max": mask_area_ratio_max,
         "anchor": actual,
         "backend": record.get("backend", "未记录"),
     }
@@ -168,6 +181,7 @@ def self_test() -> None:
     assert max(deltas) > 0.001
     assert all(np.count_nonzero(alpha[index][masks[index].astype(bool)] > 1e-6) == 0
                for index in range(frames))
+    assert float(masks.mean()) < 0.60
     assert (640, 400) == (640, 400)
 
 

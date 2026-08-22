@@ -39,6 +39,7 @@ from tools.taichi_bridge.smoke import advance_fallback
 
 SMOKE_GRID = (96, 54)
 SMOKE_ANCHOR = (640, 400)
+MAX_TARGET_MASK_COVERAGE = 0.60
 
 
 class PipelineError(RuntimeError):
@@ -174,6 +175,15 @@ def sam_first_mask(frame: np.ndarray, checkpoint: Path, point: tuple[int, int], 
     return masks[selected].astype(np.float32)
 
 
+def xmem_object_mask(predicted: torch.Tensor) -> np.ndarray:
+    """从 XMem 的背景加对象概率中只提取单对象通道。"""
+    if predicted.ndim != 3 or predicted.shape[0] < 2:
+        raise PipelineError(
+            f"XMem 没有返回单对象概率通道: shape={tuple(predicted.shape)}"
+        )
+    return (predicted[1].float().cpu().numpy() > 0.5).astype(np.float32)
+
+
 def xmem_masks(
     frames: list[np.ndarray],
     seed_mask: np.ndarray,
@@ -214,12 +224,50 @@ def xmem_masks(
         mask = torch.from_numpy(seed_mask).to(device=device).unsqueeze(0) if index == seed_index else None
         with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.float16):
             predicted = processor.step(image, mask=mask, end=index == len(frames) - 1)
-        output.append((predicted[0].float().cpu().numpy() > 0.5).astype(np.float32))
+        output.append(xmem_object_mask(predicted))
         if index % 20 == 0:
             print(f"XMem frame {index + 1}/{len(frames)}")
     del processor, network
     torch.cuda.empty_cache()
     return output
+
+
+def validate_target_masks(name: str, masks: list[np.ndarray], seed_index: int) -> dict[str, float]:
+    """拒绝将背景概率误作目标掩码的结果。"""
+    coverage = np.asarray([(mask > 0.5).mean() for mask in masks], dtype=np.float64)
+    tracked_coverage = coverage[seed_index:]
+    if not len(tracked_coverage):
+        raise PipelineError(f"{name}: 没有可校验的目标掩码")
+    seed_coverage = float(tracked_coverage[0])
+    max_coverage = float(tracked_coverage.max())
+    if seed_coverage <= 0.001:
+        raise PipelineError(f"{name}: 种子目标掩码过小: coverage={seed_coverage:.4f}")
+    if max_coverage > MAX_TARGET_MASK_COVERAGE:
+        raise PipelineError(
+            f"{name}: 目标掩码覆盖画面过大: coverage={max_coverage:.4f} "
+            f"> {MAX_TARGET_MASK_COVERAGE:.2f}"
+        )
+    return {
+        "mask_area_ratio_seed": seed_coverage,
+        "mask_area_ratio_max": max_coverage,
+        "mask_area_ratio_p95": float(np.percentile(tracked_coverage, 95)),
+    }
+
+
+def pipeline_self_test() -> None:
+    """验证 XMem 对象通道选择和整帧背景掩码拒绝逻辑。"""
+    predicted = torch.zeros((2, 4, 4), dtype=torch.float32)
+    predicted[0].fill_(0.99)
+    predicted[1, 1:3, 1:3] = 0.99
+    selected = xmem_object_mask(predicted)
+    if int(selected.sum()) != 4:
+        raise PipelineError("XMem 自测没有选择对象概率通道")
+    validate_target_masks("自测", [selected, selected], 0)
+    try:
+        validate_target_masks("自测背景", [np.ones((4, 4), dtype=np.float32)], 0)
+    except PipelineError:
+        return
+    raise PipelineError("XMem 自测没有拒绝整帧背景掩码")
 
 
 def load_propainter(checkpoint: Path, device: torch.device) -> torch.nn.Module:
@@ -446,6 +494,7 @@ def process_case(
     first_mask = sam_first_mask(inference_frames[seed_frame], models["sam-vit-base"], inference_point, device)
     masks_small = xmem_masks(inference_frames, first_mask, seed_frame, models["xmem"], device)
     masks = [cv2.resize(mask, (frames[0].shape[1], frames[0].shape[0]), interpolation=cv2.INTER_LINEAR) for mask in masks_small]
+    mask_quality = validate_target_masks(name, masks, seed_frame)
     depth_small = run_depth(inference_frames[0], models["midas-dpt-swin2-tiny"], device)
     depth = cv2.resize(depth_small, (frames[0].shape[1], frames[0].shape[0]), interpolation=cv2.INTER_CUBIC)
     if mode in {"remove", "move"}:
@@ -486,6 +535,7 @@ def process_case(
         "inference_width": inference_frames[0].shape[1],
         "xmem_seed_frame": seed_frame,
         "mask_iou_eval_start_frame": seed_frame,
+        "sam_seed_area_ratio": float((first_mask > 0.5).mean()),
         "repair_quality": "requires maintainer visual review for trails/flicker",
         "occlusion_quality": "requires maintainer visual review",
         "wall_seconds": time.perf_counter() - started,
@@ -522,6 +572,7 @@ def process_case(
     if min_iou <= 0.7:
         raise PipelineError(f"{name}: adjacent mask IoU gate failed: min={min_iou:.4f} <= 0.7")
     record.update({
+        **mask_quality,
         "mask_iou_adjacent_min": min_iou,
         "mask_iou_adjacent_p50": float(np.percentile(ious, 50)),
         "mask_iou_gate": "passed (min > 0.7)",
@@ -532,8 +583,13 @@ def process_case(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Phase 9 real-weight demonstrations")
     parser.add_argument("--case", choices=("person", "vehicle", "pet", "all"), default="all")
+    parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     try:
+        if args.self_test:
+            pipeline_self_test()
+            print("[PASS] Phase 9 目标掩码合同")
+            return 0
         device = require_cuda()
         models = load_locked_models()
         cases = {
