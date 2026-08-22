@@ -79,6 +79,14 @@ def load_alpha(path: Path, expected_frames: int, height: int, width: int) -> np.
     return alpha.astype(np.float32)
 
 
+def load_intrinsic_alpha(record: dict[str, object], expected_frames: int,
+                         height: int, width: int) -> np.ndarray:
+    path_value = record.get("intrinsic_effect_alpha")
+    if not path_value:
+        raise AssertionError("缺少遮挡前的本征特效 alpha 留档")
+    return load_alpha(Path(str(path_value)), expected_frames, height, width)
+
+
 def effect_pixels(before: np.ndarray, after: np.ndarray) -> np.ndarray:
     return np.max(np.abs(after.astype(np.int16) - before.astype(np.int16)), axis=2) > 12
 
@@ -124,6 +132,9 @@ def check_case(record: dict[str, object], ffmpeg: str, ffprobe: str) -> dict[str
     mode = str(record.get("mode", ""))
     if mode == "smoke":
         alpha = load_alpha(Path(str(record["effect_alpha"])), len(before), source_height, source_width)
+        intrinsic_alpha = load_intrinsic_alpha(
+            record, len(before), source_height, source_width
+        )
         for index, mask in enumerate(masks):
             masked_alpha = alpha[index][mask]
             masked_contributions.append(int(np.count_nonzero(masked_alpha > 1e-6)))
@@ -133,14 +144,25 @@ def check_case(record: dict[str, object], ffmpeg: str, ffprobe: str) -> dict[str
                 )
         for previous_index, current_index in zip(sample_indices, sample_indices[1:]):
             differences.append(float(np.mean(np.abs(
-                alpha[current_index, top:bottom, left:right]
-                - alpha[previous_index, top:bottom, left:right]
+                intrinsic_alpha[current_index, top:bottom, left:right]
+                - intrinsic_alpha[previous_index, top:bottom, left:right]
             ))))
         threshold = float(record.get("min_effect_frame_delta", 0.001))
         if not differences or max(differences) <= threshold:
             raise AssertionError(
                 f"特效区域没有足够帧间变化: max_frame_delta={max(differences, default=0.0):.6f} "
                 f"<= threshold={threshold:.6f}"
+            )
+        visible_differences = []
+        for before_frame, after_frame in zip(before, after):
+            delta = effect_pixels(before_frame, after_frame)
+            visible_differences.append(float(np.mean(delta[top:bottom, left:right])))
+        visible_threshold = float(record.get("min_effect_change_coverage", 0.002))
+        if max(visible_differences, default=0.0) <= visible_threshold:
+            raise AssertionError(
+                f"编码后特效可见像素覆盖不足: max_changed_ratio="
+                f"{max(visible_differences, default=0.0):.6f} "
+                f"<= threshold={visible_threshold:.6f}"
             )
     else:
         for before_frame, after_frame in zip(before, after):
@@ -159,6 +181,8 @@ def check_case(record: dict[str, object], ffmpeg: str, ffprobe: str) -> dict[str
         "frame_count": len(before),
         "sampled_effect_frame_delta": differences,
         "max_effect_frame_delta": max(differences, default=0.0),
+        "max_visible_effect_changed_ratio": max(visible_differences, default=0.0)
+        if mode == "smoke" else None,
         "max_masked_effect_pixels": max(masked_contributions, default=0),
         "mask_area_ratio_max": mask_area_ratio_max,
         "anchor": actual,

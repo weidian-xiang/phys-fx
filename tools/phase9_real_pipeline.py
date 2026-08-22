@@ -465,7 +465,7 @@ def make_smoke(
     masks: list[np.ndarray],
     depth: np.ndarray,
     configured_anchor: tuple[int, int],
-) -> tuple[list[np.ndarray], list[np.ndarray], dict[str, object]]:
+) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray], dict[str, object]]:
     height, width = frames[0].shape[:2]
     grid_width, grid_height = SMOKE_GRID
     grid_x = round(configured_anchor[0] * grid_width / width)
@@ -482,6 +482,7 @@ def make_smoke(
     density = [0.0] * (grid_width * grid_height)
     outputs: list[np.ndarray] = []
     alphas: list[np.ndarray] = []
+    intrinsic_alphas: list[np.ndarray] = []
     for index, (frame, mask) in enumerate(zip(frames, masks)):
         density = advance_fallback(
             density,
@@ -494,7 +495,12 @@ def make_smoke(
         )
         density_grid = np.asarray(density, dtype=np.float32).reshape(grid_height, grid_width)
         density_full = cv2.resize(density_grid, (width, height), interpolation=cv2.INTER_LINEAR)
-        opacity = np.clip(density_full * (0.65 + 0.35 * depth), 0, 0.62)
+        intrinsic_opacity = np.clip(
+            np.power(density_full, 0.72) * (0.78 + 0.22 * depth),
+            0,
+            0.78,
+        )
+        opacity = intrinsic_opacity.copy()
         opacity *= 1.0 - feather(mask, 3)
         opacity[mask > 0.5] = 0.0
         smoke = np.zeros_like(frame, dtype=np.float32)
@@ -502,7 +508,8 @@ def make_smoke(
         result = frame.astype(np.float32) * (1 - opacity[..., None]) + smoke * opacity[..., None]
         outputs.append(np.clip(result, 0, 255).astype(np.uint8))
         alphas.append(opacity.astype(np.float32))
-    return outputs, alphas, {
+        intrinsic_alphas.append(intrinsic_opacity.astype(np.float32))
+    return outputs, alphas, intrinsic_alphas, {
         "backend": "cpu-fallback",
         "grid_width": grid_width,
         "grid_height": grid_height,
@@ -549,7 +556,9 @@ def process_case(
     elif mode == "move":
         output = make_move(frames, masks, repaired, depth)
     elif mode == "smoke":
-        output, smoke_alphas, smoke_meta = make_smoke(frames, masks, depth, SMOKE_ANCHOR)
+        output, smoke_alphas, intrinsic_smoke_alphas, smoke_meta = make_smoke(
+            frames, masks, depth, SMOKE_ANCHOR
+        )
     else:
         raise PipelineError(f"unknown mode: {mode}")
     output_path = BUILD / f"{name}-before-after.mp4"
@@ -581,11 +590,18 @@ def process_case(
     if mode == "smoke":
         alpha_path = BUILD / f"{name}-smoke-alpha.npz"
         np.savez_compressed(alpha_path, alpha=np.asarray(smoke_alphas, dtype=np.float32))
+        intrinsic_alpha_path = BUILD / f"{name}-smoke-intrinsic-alpha.npz"
+        np.savez_compressed(
+            intrinsic_alpha_path,
+            alpha=np.asarray(intrinsic_smoke_alphas, dtype=np.float32),
+        )
         record.update(smoke_meta)
         record.update({
             "effect_alpha": str(alpha_path),
+            "intrinsic_effect_alpha": str(intrinsic_alpha_path),
             "effect_region": [400, 100, 900, 650],
             "min_effect_frame_delta": 0.001,
+            "min_effect_change_coverage": 0.002,
             "anchor_check": True,
         })
     else:

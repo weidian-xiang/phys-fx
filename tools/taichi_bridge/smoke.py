@@ -38,10 +38,13 @@ def advance_fallback(
     for y in range(height):
         for x in range(width):
             if mode == "smoke":
-                source = min(height - 1, y + 1) * width + x
-                left = previous[y * width + max(0, x - 1)]
-                right = previous[y * width + min(width - 1, x + 1)]
-                value = 0.985 * (0.5 * previous[source] + 0.25 * (left + right))
+                # 每步加入轻微横向平流，避免恒定注入在短时间内冻结成一条亮带。
+                wind = int(round(1.4 * math.sin(step * 0.17 + y * 0.21)))
+                advected_x = max(0, min(width - 1, x - wind))
+                source = min(height - 1, y + 1) * width + advected_x
+                left = previous[y * width + max(0, advected_x - 1)]
+                right = previous[y * width + min(width - 1, advected_x + 1)]
+                value = 0.94 * (0.58 * previous[source] + 0.21 * (left + right))
             else:
                 left = previous[y * width + max(0, x - 1)]
                 right = previous[y * width + min(width - 1, x + 1)]
@@ -50,15 +53,31 @@ def advance_fallback(
                 value = 0.97 * (0.4 * previous[y * width + x] + 0.15 *
                                 (left + right + above + below))
             density[y * width + x] = max(0.0, min(1.0, value))
-    radius_limit = 2 if mode == "smoke" else min(8, 2 + step // 3)
-    for radius in range(-radius_limit, radius_limit + 1):
-        x = source_x + radius if mode == "splash" else source_x
-        y = source_y if mode == "splash" else source_y + radius
-        if 0 <= x < width and 0 <= y < height:
-            density[y * width + x] = min(
-                1.0, density[y * width + x] + 0.18 *
-                (1.0 - abs(radius) / (radius_limit + 1.0))
-            )
+    if mode == "smoke":
+        emission = 0.12 + 0.10 * (0.5 + 0.5 * math.sin(step * 0.37))
+        for offset_y in range(-2, 3):
+            for offset_x in range(-2, 3):
+                distance = math.hypot(offset_x, offset_y)
+                if distance > 2.2:
+                    continue
+                x = source_x + offset_x
+                y = source_y + offset_y
+                if 0 <= x < width and 0 <= y < height:
+                    density[y * width + x] = min(
+                        1.0,
+                        density[y * width + x] + emission *
+                        max(0.0, 1.0 - distance / 2.5),
+                    )
+    else:
+        radius_limit = min(8, 2 + step // 3)
+        for radius in range(-radius_limit, radius_limit + 1):
+            x = source_x + radius
+            y = source_y
+            if 0 <= x < width and 0 <= y < height:
+                density[y * width + x] = min(
+                    1.0, density[y * width + x] + 0.18 *
+                    (1.0 - abs(radius) / (radius_limit + 1.0))
+                )
     return density
 
 
