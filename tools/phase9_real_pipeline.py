@@ -32,6 +32,13 @@ FOOTAGE = ROOT / "assets" / "demo-footage"
 BUILD = ROOT / "build" / "phase9-real"
 XMEM_ROOT = ROOT / "build" / "phase9-third-party" / "XMem-ec776eac6feaf59b4860678c3363ce7634e19c5e"
 MIDAS_ROOT = ROOT / "build" / "phase9-third-party" / "MiDaS-1645b7e1675301fdfac03640738fe5a6531e17d6"
+sys.path.insert(0, str(ROOT))
+
+from tools.taichi_bridge.smoke import advance_fallback
+
+
+SMOKE_GRID = (96, 54)
+SMOKE_ANCHOR = (640, 400)
 
 
 class PipelineError(RuntimeError):
@@ -371,24 +378,56 @@ def make_move(frames: list[np.ndarray], masks: list[np.ndarray], repaired: list[
     return output
 
 
-def make_smoke(frames: list[np.ndarray], masks: list[np.ndarray], depth: np.ndarray) -> list[np.ndarray]:
+def make_smoke(
+    frames: list[np.ndarray],
+    masks: list[np.ndarray],
+    depth: np.ndarray,
+    configured_anchor: tuple[int, int],
+) -> tuple[list[np.ndarray], list[np.ndarray], dict[str, object]]:
     height, width = frames[0].shape[:2]
-    yy, xx = np.mgrid[0:height, 0:width]
-    # The plume is attached to the central tree trunk; the tracked dog masks it
-    # when crossing in front, rather than treating the animal as part of smoke.
-    center_x, center_y = int(width * 0.50), int(height * 0.55)
-    base = np.exp(-(((xx - center_x) / (width * 0.08)) ** 2 + ((yy - center_y) / (height * 0.22)) ** 2))
+    grid_width, grid_height = SMOKE_GRID
+    grid_x = round(configured_anchor[0] * grid_width / width)
+    grid_y = round(configured_anchor[1] * grid_height / height)
+    actual_anchor = (
+        round(grid_x * width / grid_width),
+        round(grid_y * height / grid_height),
+    )
+    if actual_anchor != configured_anchor:
+        raise PipelineError(
+            f"烟雾锚点无法在 {grid_width}x{grid_height} 网格精确表达: "
+            f"configured={configured_anchor} actual={actual_anchor}"
+        )
+    density = [0.0] * (grid_width * grid_height)
     outputs: list[np.ndarray] = []
+    alphas: list[np.ndarray] = []
     for index, (frame, mask) in enumerate(zip(frames, masks)):
-        wobble = np.sin(index * 0.22) * width * 0.018
-        plume = np.exp(-(((xx - center_x - wobble) / (width * 0.09)) ** 2 + ((yy - center_y + index * height * 0.0008) / (height * 0.25)) ** 2))
-        opacity = np.clip((0.30 * base + 0.42 * plume) * (0.75 + 0.25 * depth), 0, 0.62)
-        opacity *= (1.0 - feather(mask, 3))
+        density = advance_fallback(
+            density,
+            grid_width,
+            grid_height,
+            "smoke",
+            source_x=grid_x,
+            source_y=grid_y,
+            step=index,
+        )
+        density_grid = np.asarray(density, dtype=np.float32).reshape(grid_height, grid_width)
+        density_full = cv2.resize(density_grid, (width, height), interpolation=cv2.INTER_LINEAR)
+        opacity = np.clip(density_full * (0.65 + 0.35 * depth), 0, 0.62)
+        opacity *= 1.0 - feather(mask, 3)
+        opacity[mask > 0.5] = 0.0
         smoke = np.zeros_like(frame, dtype=np.float32)
         smoke[..., :] = np.asarray([226, 232, 236], dtype=np.float32)
         result = frame.astype(np.float32) * (1 - opacity[..., None]) + smoke * opacity[..., None]
         outputs.append(np.clip(result, 0, 255).astype(np.uint8))
-    return outputs
+        alphas.append(opacity.astype(np.float32))
+    return outputs, alphas, {
+        "backend": "cpu-fallback",
+        "grid_width": grid_width,
+        "grid_height": grid_height,
+        "configured_anchor": list(configured_anchor),
+        "actual_anchor": list(actual_anchor),
+        "grid_anchor": [grid_x, grid_y],
+    }
 
 
 def process_case(
@@ -426,11 +465,48 @@ def process_case(
     elif mode == "move":
         output = make_move(frames, masks, repaired, depth)
     elif mode == "smoke":
-        output = make_smoke(frames, masks, depth)
+        output, smoke_alphas, smoke_meta = make_smoke(frames, masks, depth, SMOKE_ANCHOR)
     else:
         raise PipelineError(f"unknown mode: {mode}")
     output_path = BUILD / f"{name}-before-after.mp4"
     write_comparison_video(output_path, frames, output, fps)
+    masks_path = BUILD / f"{name}-masks.npz"
+    np.savez_compressed(masks_path, masks=np.asarray(masks, dtype=np.float32))
+    record: dict[str, object] = {
+        "name": name,
+        "mode": mode,
+        "input_path": str(input_path),
+        "output": str(output_path),
+        "masks": str(masks_path),
+        "fps": fps,
+        "input_media": input_info,
+        "source_width": frames[0].shape[1],
+        "source_height": frames[0].shape[0],
+        "inference_height": inference_frames[0].shape[0],
+        "inference_width": inference_frames[0].shape[1],
+        "xmem_seed_frame": seed_frame,
+        "mask_iou_eval_start_frame": seed_frame,
+        "repair_quality": "requires maintainer visual review for trails/flicker",
+        "occlusion_quality": "requires maintainer visual review",
+        "wall_seconds": time.perf_counter() - started,
+        "weights": {key: str(value) for key, value in models.items()},
+    }
+    if mode == "smoke":
+        alpha_path = BUILD / f"{name}-smoke-alpha.npz"
+        np.savez_compressed(alpha_path, alpha=np.asarray(smoke_alphas, dtype=np.float32))
+        record.update(smoke_meta)
+        record.update({
+            "effect_alpha": str(alpha_path),
+            "effect_region": [400, 100, 900, 650],
+            "min_effect_frame_delta": 0.001,
+            "anchor_check": True,
+        })
+    else:
+        record.update({
+            "configured_anchor": list(point),
+            "actual_anchor": list(point),
+            "anchor_check": False,
+        })
     ious = []
     # Frames before the seed are deliberately empty because the target is not
     # yet visible. They are not a tracking transition and cannot be part of
@@ -445,25 +521,12 @@ def process_case(
     min_iou = min(ious)
     if min_iou <= 0.7:
         raise PipelineError(f"{name}: adjacent mask IoU gate failed: min={min_iou:.4f} <= 0.7")
-    return {
-        "name": name,
-        "mode": mode,
-        "input_path": str(input_path),
-        "output": str(output_path),
-        "fps": fps,
-        "input_media": input_info,
-        "inference_height": inference_frames[0].shape[0],
-        "inference_width": inference_frames[0].shape[1],
-        "xmem_seed_frame": seed_frame,
-        "mask_iou_eval_start_frame": seed_frame,
+    record.update({
         "mask_iou_adjacent_min": min_iou,
         "mask_iou_adjacent_p50": float(np.percentile(ious, 50)),
         "mask_iou_gate": "passed (min > 0.7)",
-        "repair_quality": "requires maintainer visual review for trails/flicker",
-        "occlusion_quality": "requires maintainer visual review",
-        "wall_seconds": time.perf_counter() - started,
-        "weights": {key: str(value) for key, value in models.items()},
-    }
+    })
+    return record
 
 
 def main() -> int:

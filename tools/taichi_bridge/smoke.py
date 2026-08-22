@@ -20,40 +20,70 @@ import time
 from pathlib import Path
 
 
-def solve_fallback(width: int, height: int, steps: int, mode: str) -> list[float]:
-    density = [0.0] * (width * height)
-    source_x = width // 2
-    source_y = height * 3 // 4
-    for step in range(steps):
-        previous = density[:]
-        for y in range(height):
-            for x in range(width):
-                if mode == "smoke":
-                    source = min(height - 1, y + 1) * width + x
-                    left = previous[y * width + max(0, x - 1)]
-                    right = previous[y * width + min(width - 1, x + 1)]
-                    value = 0.985 * (0.5 * previous[source] + 0.25 * (left + right))
-                else:
-                    left = previous[y * width + max(0, x - 1)]
-                    right = previous[y * width + min(width - 1, x + 1)]
-                    above = previous[max(0, y - 1) * width + x]
-                    below = previous[min(height - 1, y + 1) * width + x]
-                    value = 0.97 * (0.4 * previous[y * width + x] + 0.15 *
-                                    (left + right + above + below))
-                density[y * width + x] = max(0.0, min(1.0, value))
-        radius_limit = 2 if mode == "smoke" else min(8, 2 + step // 3)
-        for radius in range(-radius_limit, radius_limit + 1):
-            x = source_x + radius if mode == "splash" else source_x
-            y = source_y if mode == "splash" else source_y + radius
-            if 0 <= x < width and 0 <= y < height:
-                density[y * width + x] = min(
-                    1.0, density[y * width + x] + 0.18 *
-                    (1.0 - abs(radius) / (radius_limit + 1.0))
-                )
+def advance_fallback(
+    density: list[float],
+    width: int,
+    height: int,
+    mode: str,
+    source_x: int | None = None,
+    source_y: int | None = None,
+    step: int = 0,
+) -> list[float]:
+    """推进一个时间步，并在配置发射点注入新的密度。"""
+    if len(density) != width * height:
+        raise ValueError("密度场尺寸与网格配置不一致")
+    source_x = width // 2 if source_x is None else max(0, min(width - 1, source_x))
+    source_y = height * 3 // 4 if source_y is None else max(0, min(height - 1, source_y))
+    previous = density[:]
+    for y in range(height):
+        for x in range(width):
+            if mode == "smoke":
+                source = min(height - 1, y + 1) * width + x
+                left = previous[y * width + max(0, x - 1)]
+                right = previous[y * width + min(width - 1, x + 1)]
+                value = 0.985 * (0.5 * previous[source] + 0.25 * (left + right))
+            else:
+                left = previous[y * width + max(0, x - 1)]
+                right = previous[y * width + min(width - 1, x + 1)]
+                above = previous[max(0, y - 1) * width + x]
+                below = previous[min(height - 1, y + 1) * width + x]
+                value = 0.97 * (0.4 * previous[y * width + x] + 0.15 *
+                                (left + right + above + below))
+            density[y * width + x] = max(0.0, min(1.0, value))
+    radius_limit = 2 if mode == "smoke" else min(8, 2 + step // 3)
+    for radius in range(-radius_limit, radius_limit + 1):
+        x = source_x + radius if mode == "splash" else source_x
+        y = source_y if mode == "splash" else source_y + radius
+        if 0 <= x < width and 0 <= y < height:
+            density[y * width + x] = min(
+                1.0, density[y * width + x] + 0.18 *
+                (1.0 - abs(radius) / (radius_limit + 1.0))
+            )
     return density
 
 
-def solve_taichi(width: int, height: int, steps: int, mode: str) -> list[float]:
+def solve_fallback(
+    width: int,
+    height: int,
+    steps: int,
+    mode: str,
+    source_x: int | None = None,
+    source_y: int | None = None,
+) -> list[float]:
+    density = [0.0] * (width * height)
+    for step in range(steps):
+        density = advance_fallback(density, width, height, mode, source_x, source_y, step)
+    return density
+
+
+def solve_taichi(
+    width: int,
+    height: int,
+    steps: int,
+    mode: str,
+    source_x: int | None = None,
+    source_y: int | None = None,
+) -> list[float]:
     import taichi as ti
 
     ti.init(arch=ti.cpu, offline_cache=False, log_level=ti.ERROR)
@@ -115,8 +145,8 @@ def solve_taichi(width: int, height: int, steps: int, mode: str) -> list[float]:
                         (1.0 - ti.abs(radius) / (radius_limit + 1.0))
                     )
 
-    source_x = width // 2
-    source_y = height * 3 // 4
+    source_x = width // 2 if source_x is None else max(0, min(width - 1, source_x))
+    source_y = height * 3 // 4 if source_y is None else max(0, min(height - 1, source_y))
     for step in range(steps):
         if mode == "smoke":
             smoke_step()
@@ -136,6 +166,8 @@ def main() -> int:
     parser.add_argument("--width", type=int, default=96)
     parser.add_argument("--height", type=int, default=54)
     parser.add_argument("--mode", choices=("smoke", "splash"), default="smoke")
+    parser.add_argument("--anchor-x", type=int)
+    parser.add_argument("--anchor-y", type=int)
     parser.add_argument("--require-taichi", action="store_true")
     args = parser.parse_args()
     if args.steps <= 0 or args.width < 8 or args.height < 8:
@@ -143,13 +175,15 @@ def main() -> int:
         return 2
     started = time.perf_counter()
     try:
-        density = solve_taichi(args.width, args.height, args.steps, args.mode)
+        density = solve_taichi(args.width, args.height, args.steps, args.mode,
+                               args.anchor_x, args.anchor_y)
         backend = "taichi-cpu"
     except ImportError as exc:
         if args.require_taichi:
             print(f"Taichi 运行时不可用: {exc}")
             return 4
-        density = solve_fallback(args.width, args.height, args.steps, args.mode)
+        density = solve_fallback(args.width, args.height, args.steps, args.mode,
+                                 args.anchor_x, args.anchor_y)
         backend = "cpu-fallback"
     if any(not math.isfinite(value) or value < 0.0 or value > 1.0 for value in density):
         print("密度场数值不稳定")

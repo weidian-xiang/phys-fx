@@ -426,6 +426,9 @@ if(PHYSFX_BUILD_TESTS)
 
   find_package(Python 3.11 COMPONENTS Interpreter QUIET)
   if(Python_Interpreter_FOUND)
+    add_test(NAME phase9_effects_contract_test
+      COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_phase9_effects.py"
+              --self-test)
     add_test(NAME copyright_header_test
       COMMAND "${Python_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/check_copyright.py"
               --root "${CMAKE_SOURCE_DIR}")
