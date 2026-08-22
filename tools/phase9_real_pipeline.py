@@ -154,6 +154,30 @@ def resize_frames(frames: list[np.ndarray], height: int) -> tuple[list[np.ndarra
     return [cv2.resize(frame, (width, target_height), interpolation=cv2.INTER_AREA) for frame in frames], ratio
 
 
+def select_sam_mask(
+    masks: np.ndarray,
+    scores: np.ndarray,
+    point: tuple[int, int],
+) -> np.ndarray:
+    """从 SAM 候选中选择覆盖点且面积合理的完整实体。"""
+    if masks.ndim != 3 or len(masks) != len(scores):
+        raise PipelineError("SAM 候选掩码与分数形状不一致")
+    candidates: list[tuple[float, float, int]] = []
+    x, y = point
+    for index, mask in enumerate(masks):
+        coverage = float(mask.mean())
+        if mask[y, x] and 0.001 < coverage <= MAX_TARGET_MASK_COVERAGE:
+            candidates.append((coverage, float(scores[index]), index))
+    if not candidates:
+        raise PipelineError(
+            f"SAM 没有返回覆盖种子点且面积合理的实体候选: "
+            f"point={point} scores={scores.tolist()} "
+            f"areas={[float(mask.mean()) for mask in masks]}"
+        )
+    _, _, selected = max(candidates)
+    return masks[selected].astype(np.float32)
+
+
 def sam_first_mask(frame: np.ndarray, checkpoint: Path, point: tuple[int, int], device: torch.device) -> np.ndarray:
     from segment_anything import SamPredictor, sam_model_registry
 
@@ -169,12 +193,12 @@ def sam_first_mask(frame: np.ndarray, checkpoint: Path, point: tuple[int, int], 
         point_labels=point_labels,
         multimask_output=True,
     )
-    selected = int(np.argmax(scores))
-    if float(scores[selected]) < 0.5 or masks[selected].sum() == 0:
-        raise PipelineError(f"SAM failed to produce a usable first-frame mask; scores={scores.tolist()}")
+    selected_mask = select_sam_mask(masks, scores, point)
+    if selected_mask.sum() == 0:
+        raise PipelineError(f"SAM 未产生非空实体掩码: scores={scores.tolist()}")
     del predictor, model
     torch.cuda.empty_cache()
-    return masks[selected].astype(np.float32)
+    return selected_mask
 
 
 def xmem_object_mask(predicted: torch.Tensor) -> np.ndarray:
@@ -287,6 +311,13 @@ def pipeline_self_test() -> None:
     selected = xmem_object_mask(predicted)
     if int(selected.sum()) != 4:
         raise PipelineError("XMem 自测没有选择对象概率通道")
+    sam_masks = np.zeros((3, 4, 4), dtype=bool)
+    sam_masks[0, 1:3, 1:3] = True
+    sam_masks[1, 1:4, 1:4] = True
+    sam_masks[2, :, :] = True
+    sam_selected = select_sam_mask(sam_masks, np.asarray([0.99, 0.80, 1.0]), (1, 1))
+    if int(sam_selected.sum()) != 9:
+        raise PipelineError("SAM 自测没有选择覆盖种子点的最大合理实体候选")
     validate_target_masks("自测", [selected, selected], 0)
     try:
         validate_target_masks("自测背景", [np.ones((4, 4), dtype=np.float32)], 0)
@@ -647,8 +678,8 @@ def main() -> int:
         cases = {
             # 第 20 帧人物已完整进入画面；第 0 帧该点落在砖墙/画面边缘，
             # 会让 SAM 选择背景并污染后续 XMem 记忆。
-            "person": ("人物", (470, 300), 20, "remove"),
-            "vehicle": ("车辆", (500, 350), 0, "move"),
+            "person": ("人物", (250, 300), 20, "remove"),
+            "vehicle": ("车辆", (260, 300), 0, "move"),
             "pet": ("宠物", (790, 450), 72, "smoke"),
         }
         selected = list(cases) if args.case == "all" else [args.case]
