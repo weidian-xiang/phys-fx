@@ -645,7 +645,9 @@ def main() -> int:
         device = require_cuda()
         models = load_locked_models()
         cases = {
-            "person": ("人物", (470, 300), 0, "remove"),
+            # 第 20 帧人物已完整进入画面；第 0 帧该点落在砖墙/画面边缘，
+            # 会让 SAM 选择背景并污染后续 XMem 记忆。
+            "person": ("人物", (470, 300), 20, "remove"),
             "vehicle": ("车辆", (500, 350), 0, "move"),
             "pet": ("宠物", (790, 450), 72, "smoke"),
         }
