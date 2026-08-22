@@ -40,6 +40,8 @@ from tools.taichi_bridge.smoke import advance_fallback
 SMOKE_GRID = (96, 54)
 SMOKE_ANCHOR = (640, 400)
 MAX_TARGET_MASK_COVERAGE = 0.60
+EXIT_AREA_FRACTION = 0.40
+EXIT_CONFIRMATION_FRAMES = 3
 
 
 class PipelineError(RuntimeError):
@@ -254,6 +256,29 @@ def validate_target_masks(name: str, masks: list[np.ndarray], seed_index: int) -
     }
 
 
+def find_target_exit_frame(masks: list[np.ndarray], seed_index: int) -> int:
+    """识别目标连续贴边离场的首帧，避免将离场空掩码纳入 IoU。"""
+    seed_coverage = float((masks[seed_index] > 0.5).mean())
+    max_exit_coverage = seed_coverage * EXIT_AREA_FRACTION
+    height, width = masks[seed_index].shape
+    for index in range(seed_index + 1, len(masks) - EXIT_CONFIRMATION_FRAMES + 1):
+        exiting = True
+        for candidate in masks[index:index + EXIT_CONFIRMATION_FRAMES]:
+            binary = candidate > 0.5
+            coverage = float(binary.mean())
+            y_coords, x_coords = np.where(binary)
+            touches_edge = not len(x_coords) or (
+                x_coords.min() == 0 or x_coords.max() == width - 1 or
+                y_coords.min() == 0 or y_coords.max() == height - 1
+            )
+            if coverage > max_exit_coverage or not touches_edge:
+                exiting = False
+                break
+        if exiting:
+            return index
+    return len(masks)
+
+
 def pipeline_self_test() -> None:
     """验证 XMem 对象通道选择和整帧背景掩码拒绝逻辑。"""
     predicted = torch.zeros((2, 4, 4), dtype=torch.float32)
@@ -266,8 +291,17 @@ def pipeline_self_test() -> None:
     try:
         validate_target_masks("自测背景", [np.ones((4, 4), dtype=np.float32)], 0)
     except PipelineError:
-        return
-    raise PipelineError("XMem 自测没有拒绝整帧背景掩码")
+        pass
+    else:
+        raise PipelineError("XMem 自测没有拒绝整帧背景掩码")
+    leaving = [np.zeros((4, 4), dtype=np.float32) for _ in range(5)]
+    leaving[0][1:3, 1:3] = 1.0
+    leaving[1][1:3, 2:4] = 1.0
+    leaving[2][1, 3] = 1.0
+    leaving[3][1, 3] = 1.0
+    leaving[4][1, 3] = 1.0
+    if find_target_exit_frame(leaving, 0) != 2:
+        raise PipelineError("XMem 自测没有识别连续贴边离场")
 
 
 def load_propainter(checkpoint: Path, device: torch.device) -> torch.nn.Module:
@@ -495,6 +529,7 @@ def process_case(
     masks_small = xmem_masks(inference_frames, first_mask, seed_frame, models["xmem"], device)
     masks = [cv2.resize(mask, (frames[0].shape[1], frames[0].shape[0]), interpolation=cv2.INTER_LINEAR) for mask in masks_small]
     mask_quality = validate_target_masks(name, masks, seed_frame)
+    track_eval_end = find_target_exit_frame(masks, seed_frame)
     depth_small = run_depth(inference_frames[0], models["midas-dpt-swin2-tiny"], device)
     depth = cv2.resize(depth_small, (frames[0].shape[1], frames[0].shape[0]), interpolation=cv2.INTER_CUBIC)
     if mode in {"remove", "move"}:
@@ -535,6 +570,8 @@ def process_case(
         "inference_width": inference_frames[0].shape[1],
         "xmem_seed_frame": seed_frame,
         "mask_iou_eval_start_frame": seed_frame,
+        "mask_iou_eval_end_frame_exclusive": track_eval_end,
+        "target_exit_frame": track_eval_end if track_eval_end < len(masks) else None,
         "sam_seed_area_ratio": float((first_mask > 0.5).mean()),
         "repair_quality": "requires maintainer visual review for trails/flicker",
         "occlusion_quality": "requires maintainer visual review",
@@ -558,10 +595,9 @@ def process_case(
             "anchor_check": False,
         })
     ious = []
-    # Frames before the seed are deliberately empty because the target is not
-    # yet visible. They are not a tracking transition and cannot be part of
-    # the adjacent-frame IoU quality calculation.
-    for previous, current in zip(masks[seed_frame:], masks[seed_frame + 1:]):
+    # 目标出现前为空掩码，连续离场后也不再代表可跟踪实体；两者都不纳入相邻帧 IoU。
+    evaluated_masks = masks[seed_frame:track_eval_end]
+    for previous, current in zip(evaluated_masks, evaluated_masks[1:]):
         previous_binary = previous > 0.5
         current_binary = current > 0.5
         union = np.logical_or(previous_binary, current_binary).sum()
