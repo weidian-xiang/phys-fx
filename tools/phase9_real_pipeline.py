@@ -42,6 +42,8 @@ SMOKE_ANCHOR = (640, 400)
 MAX_TARGET_MASK_COVERAGE = 0.60
 EXIT_AREA_FRACTION = 0.40
 EXIT_CONFIRMATION_FRAMES = 3
+PROPAINTER_WINDOW_SIZE = 80
+PROPAINTER_MASK_DILATE_RADIUS = 5
 
 
 class PipelineError(RuntimeError):
@@ -392,7 +394,14 @@ def propainter_inpaint(
     model = load_propainter(checkpoint, device)
     scale = 0.5
     raw_frames = np.asarray(frames, dtype=np.uint8)
-    raw_masks = np.asarray([(mask > 0.5).astype(np.uint8) for mask in masks])
+    # 修复区域覆盖目标边缘和运动模糊，避免模型只修复实体内部而留下轮廓残影。
+    repair_masks = []
+    kernel_size = PROPAINTER_MASK_DILATE_RADIUS * 2 + 1
+    kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)
+    for mask in masks:
+        binary = (mask > 0.5).astype(np.uint8)
+        repair_masks.append(cv2.dilate(binary, kernel, iterations=1))
+    raw_masks = np.asarray(repair_masks)
     frame_seq = TensorSequencer(
         data=torch.from_numpy(raw_frames).permute(0, 3, 1, 2).float().div(127.5).sub(1.0).to(device)
     )
@@ -404,7 +413,7 @@ def propainter_inpaint(
         use_cuda=True,
         raft_model=str(raft_checkpoint),
         pprfc_model=str(rfc_checkpoint),
-        pp_window_size=min(20, len(frames) if len(frames) % 2 == 0 else len(frames) - 1),
+        pp_window_size=PROPAINTER_WINDOW_SIZE,
         pp_stride=5,
         step=10,
     )
@@ -640,6 +649,13 @@ def process_case(
             "configured_anchor": list(point),
             "actual_anchor": list(point),
             "anchor_check": False,
+        })
+    if mode in {"remove", "move"}:
+        record.update({
+            "repair_model": "ProPainter + RAFT-Things + ProPainter-RFC",
+            "repair_mask_dilate_radius_inference_px": PROPAINTER_MASK_DILATE_RADIUS,
+            "propainter_window_size": PROPAINTER_WINDOW_SIZE,
+            "repair_path": "locked-real-weights",
         })
     ious = []
     # 目标出现前为空掩码，连续离场后也不再代表可跟踪实体；两者都不纳入相邻帧 IoU。
